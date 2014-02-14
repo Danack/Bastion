@@ -1,0 +1,29 @@
+{
+    "name": "intahwebz/bastion",
+    "description": "A satis-factory.",
+    "keywords": ["classloader", "autoloader", "optimized"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dan Ackroyd",
+            "email": "Danack@basereality.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/composer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.2",
+        "aws/aws-sdk-php": "2.5.*",
+        "composer/composer": "dev-GetRootComposerJson as 1.0.0",
+        "composer/satis": "dev-master",
+        "twig/twig": "~1.7",
+        "symfony/console": "~2.1@dev"
+    },
+    "autoload": {
+        "psr-0": { "Intahwebz\\Bastion": "src/" }
+    }
+}

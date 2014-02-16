@@ -81,7 +81,7 @@ function downloadZipBallsForTags($repo, $zipsDirectory, $ignoreListFile, $access
         try {
             modifyComposerJsonInZip($zipFilename, $tagName);            
         }
-        catch (\Intahwebz\SatisFactory\InvalidComposerFile $icf) {
+        catch (\Intahwebz\Bastion\InvalidComposerFile $icf) {
             echo "Failed modify composer.json for repo $repo with tag $tagName . It probably lacks a valid composer.json file.";
             markFileToSkip($repoTagName);
             @unlink($zipFilename);
@@ -134,7 +134,7 @@ function modifyComposerJsonInZip($zipFilename, $tag) {
 
         if ($shortestIndex == -1) {
             $zip->close();
-            throw new \Intahwebz\SatisFactory\InvalidComposerFile("Failed to find the composer.json file, delete $zipFilename \n");
+            throw new \Intahwebz\Bastion\InvalidComposerFile("Failed to find the composer.json file, delete $zipFilename \n");
         }
 
         //echo "Found the file at $shortestIndex\n";
@@ -165,11 +165,11 @@ function addVersionStringToJson($contents, $version){
         $contentsInfo = json_decode($contents, true);
     }
     catch (\Exception $e) {
-        throw new \Intahwebz\SatisFactory\InvalidComposerFile("JSON decode failed. \n");
+        throw new \Intahwebz\Bastion\InvalidComposerFile("JSON decode failed. \n");
     }
     
     if (is_array($contentsInfo) == false) {
-        throw new \Intahwebz\SatisFactory\InvalidComposerFile("Json_decode failed for contents [".$contents."] - non-utf8 characters present?");
+        throw new \Intahwebz\Bastion\InvalidComposerFile("Json_decode failed for contents [".$contents."] - non-utf8 characters present?");
     }
     
     if (array_key_exists('version', $contentsInfo) == false) {

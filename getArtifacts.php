@@ -14,4 +14,4 @@ if ($accessToken == false) {
 
 require_once("../repos.config.php");
 
-downloadZipArtifacts($listOfRepositories, "ignoreList.txt", "./zips", $accessToken);
+downloadZipArtifacts($listOfRepositories, "../ignoreList.txt", "./zipsOutput/packages", $accessToken);

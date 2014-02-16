@@ -1,0 +1,14 @@
+{
+    "name": "Intahwebz package repository",
+    "homepage": "http://satis.basereality.com/zipsOutput",
+    "repositories": [
+        {
+            "packagist": false
+        },
+        {
+            "type": "artifact",
+            "url": "zipsOutput/packages/"
+        }
+    ],
+    "require-all": true
+}

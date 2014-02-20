@@ -13,6 +13,13 @@ $sync = new S3Sync(
 );
 
 $sync->putFile("./zipsOutput/index.html", 'zips/index.html');
-$sync->putFile("./zipsOutput/packages.json", 'zips/packages.json');
-$sync->syncDirectory("./zipsOutput/packages/", "zips/packages");
-$sync->updateACL();
+
+$text = file_get_contents("./zipsOutput/packages.json");
+$text = str_replace("/documents/projects/github/Bastion/Bastion/zipsOutput", "", $text);
+file_put_contents("./zipsOutput/packages.json", $text);
+
+//$sync->putFile("./zipsOutput/packages.json", 'zips/packages.json');
+//
+//$sync->putDataAsFile($text, 'zips/packages.json');
+//$sync->syncDirectory("./zipsOutput/packages/", "zips/packages");
+//$sync->updateACL();

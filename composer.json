@@ -21,6 +21,7 @@
         "composer/composer": "dev-GetRootComposerJson as 1.0.0",
         "composer/satis": "dev-master",
         "twig/twig": "~1.7",
+
         "symfony/console": "~2.1@dev"
     },
     "autoload": {

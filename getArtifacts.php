@@ -2,8 +2,6 @@
 
 require_once('./vendor/autoload.php');
 
-\Intahwebz\Bastion\Functions::load();
-
 $accessToken = false;
 
 include_once("../config.php");
@@ -12,6 +10,16 @@ if ($accessToken == false) {
     echo "No Github access token, downloads will be rate-limited.\n";
 }
 
-require_once("../repos.config.php");
+require_once("../repos.laravel.config.php");
 
-downloadZipArtifacts($listOfRepositories, "../ignoreList.txt", "./zipsOutput/packages", $accessToken);
+use Intahwebz\Bastion\ArtifactFetcher;
+
+$artifactFetcher = new ArtifactFetcher(
+    "../ignoreList.txt",
+    "./zipsOutput/packages",
+    $accessToken
+);
+
+$artifactFetcher->downloadZipArtifacts(
+    $listOfRepositories
+);

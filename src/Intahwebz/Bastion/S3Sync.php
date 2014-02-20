@@ -33,6 +33,9 @@ class S3Sync {
             )
         ));
         //Content-Type header by passing a ContentType
+        
+        //TODO - check for okay-ness
+        var_dump($result);
 
         // We can poll the object until it is accessible
         $this->client->waitUntilObjectExists(array(
@@ -50,6 +53,10 @@ class S3Sync {
             'Metadata'   => array(
             )
         ));
+
+        //todo check for okayness
+        var_dump($result);
+        
         //Content-Type header by passing a ContentType
 
         // We can poll the object until it is accessible

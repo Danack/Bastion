@@ -6,26 +6,21 @@ use Aws\S3\S3Client;
 
 class S3Sync {
 
-    private $client;
+    private $s3Client;
 
     private $bucket;
     
     private $allowedIP;
 
-    function __construct($key, $secret, $bucket, $allowedIP) {
-
+    function __construct($bucket, $allowedIP, S3Client $s3Client) {
         $this->allowedIP = $allowedIP;
         $this->bucket = $bucket;
-        $this->client = S3Client::factory(array(
-            'key'    => $key,
-            'secret' => $secret,
-            'region' => 'eu-west-1' //todo - hard coded
-        ));
+        $this->s3Client = $s3Client;
     }
 
     function putFile($sourceFile, $destFile) {
 
-        $result = $this->client->putObject(array(
+        $result = $this->s3Client->putObject(array(
             'Bucket'     => $this->bucket,
             'Key'        => $destFile,
             'SourceFile' => $sourceFile,
@@ -38,7 +33,7 @@ class S3Sync {
         var_dump($result);
 
         // We can poll the object until it is accessible
-        $this->client->waitUntilObjectExists(array(
+        $this->s3Client->waitUntilObjectExists(array(
             'Bucket' => $this->bucket,
             'Key'    => $destFile
         ));
@@ -46,7 +41,7 @@ class S3Sync {
 
     function putDataAsFile($sourceText, $destFile) {
 
-        $result = $this->client->putObject(array(
+        $result = $this->s3Client->putObject(array(
             'Bucket'     => $this->bucket,
             'Key'        => $destFile,
             'Body'       => $sourceText,
@@ -60,7 +55,7 @@ class S3Sync {
         //Content-Type header by passing a ContentType
 
         // We can poll the object until it is accessible
-        $this->client->waitUntilObjectExists(array(
+        $this->s3Client->waitUntilObjectExists(array(
             'Bucket' => $this->bucket,
             'Key'    => $destFile
         ));
@@ -69,7 +64,7 @@ class S3Sync {
     function syncDirectory($srcDirectory, $destDirectory) {
 
         //Make sure folder exists
-        $this->client->putObject(array(
+        $this->s3Client->putObject(array(
             'Bucket'     => $this->bucket,
             'Key'        => $destDirectory.'/',
             'Body'       => '',
@@ -77,7 +72,7 @@ class S3Sync {
             )
         ));
 
-        $this->client->uploadDirectory(
+        $this->s3Client->uploadDirectory(
             $srcDirectory,
             $this->bucket,
             $destDirectory
@@ -110,7 +105,7 @@ class S3Sync {
           ]
         }';
 
-        $this->client->putBucketPolicy(array(
+        $this->s3Client->putBucketPolicy(array(
             'Bucket' => $this->bucket,
             'Policy' => $policy
         ));

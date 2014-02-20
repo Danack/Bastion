@@ -16,6 +16,7 @@ use Intahwebz\Bastion\ArtifactFetcher;
 
 $artifactFetcher = new ArtifactFetcher(
     "../ignoreList.txt",
+    "../usingList.txt",
     "./zipsOutput/packages",
     $accessToken
 );

@@ -9,10 +9,11 @@ class ArtifactFetcher {
     private $zipsDirectory;
     private $accessToken;
     
-    function __construct($ignoreListFilename, $zipsDirectory, $accessToken = null) {
+    function __construct($ignoreListFilename, $usingListFilename, $zipsDirectory, $accessToken = null) {
         $this->ignoreListFilename = $ignoreListFilename;
         $this->zipsDirectory = $zipsDirectory;
         $this->accessToken = $accessToken;
+        $this->usingListFilename = $usingListFilename;
     }
 
     /**
@@ -106,6 +107,7 @@ class ArtifactFetcher {
 
             try {
                 $this->modifyComposerJsonInZip($zipFilename, $tagName);
+                $this->markFileToBeingUsed($repoTagName);
             } catch (\Intahwebz\Bastion\InvalidComposerFile $icf) {
                 echo "Failed modify composer.json for repo $repo with tag $tagName . It probably lacks a valid composer.json file.";
                 $this->markFileToSkip($repoTagName);
@@ -217,6 +219,21 @@ class ArtifactFetcher {
     }
 
     /**
+     * Add a filename to the list being used. This allows for easier removal later
+     * with the exact key name.
+     * @param $zipFilename
+     */
+    function markFileToBeingUsed($zipFilename) {
+        $usingList = file_get_contents($this->usingListFilename);
+
+        if (strpos($usingList, $zipFilename) === false) {
+            file_put_contents($this->usingListFilename, $zipFilename . "\n", FILE_APPEND);
+        }
+    }
+    
+    /**
+     * Mark a filename to skip. This is used to avoid repeatedly downloading bad versions,
+     * or to exlcude unwanted version completely.
      * @param $zipFilename
      */
     function markFileToSkip($zipFilename) {

@@ -9,9 +9,8 @@ $sync = new S3Sync(
     AWS_SERVICES_KEY, 
     AWS_SERVICES_SECRET, 
     "satis.basereality.com",
-    $allowedIP
+    $allowedIPAddresses
 );
-
 
 $sync->putFile("./satisOutput/index.html", 'satis-public/index.html');
 $sync->putFile("./satisOutput/packages.json", 'satis-public/packages.json');

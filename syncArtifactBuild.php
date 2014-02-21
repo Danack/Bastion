@@ -15,7 +15,7 @@ $s3Client = S3Client::factory(array(
 
 $sync = new S3Sync( 
     "satis.basereality.com",
-    $allowedIP,
+    $allowedIPAddresses,
     $s3Client
 );
 
@@ -25,9 +25,7 @@ $text = file_get_contents("./zipsOutput/packages.json");
 $text = str_replace("/documents/projects/github/Bastion/Bastion/zipsOutput", "", $text);
 file_put_contents("./zipsOutput/packages.json", $text);
 
-if (false) {
-    $sync->putFile("./zipsOutput/packages.json", 'zips/packages.json');
-    $sync->putDataAsFile($text, 'zips/packages.json');
-    $sync->syncDirectory("./zipsOutput/packages/", "zips/packages");
-    $sync->updateACL();
-}
+$sync->putFile("./zipsOutput/packages.json", 'zips/packages.json');
+$sync->putFile("./zipsOutput/packages.json", 'zips/packages.json');
+$sync->syncDirectory("./zipsOutput/packages/", "zips/packages");
+$sync->updateACL();

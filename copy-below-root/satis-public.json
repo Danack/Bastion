@@ -1,0 +1,153 @@
+{
+    "name": "satis-public",
+    "homepage": "https://satis.basereality.com/satis-public",
+    "archive": {
+        "directory": "packages",
+        "format": "zip",
+        "skip-dev": false
+    },
+    "repositories": [
+        {
+            "packagist": false
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/Jig"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/mb_extra"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/intahwebz-core"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/Auryn"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/Configurator"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/intahwebz-utils"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/php-fig/log"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Seldaek/monolog"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sebastianbergmann/phpunit"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sebastianbergmann/php-code-coverage"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sebastianbergmann/php-file-iterator"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sebastianbergmann/php-text-template"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sebastianbergmann/php-timer"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sebastianbergmann/phpunit-mock-objects"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sebastianbergmann/php-code-coverage"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/sebastianbergmann/php-token-stream"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/PHP-to-Javascript"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/Configurator"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/FlickrGuzzle"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/Jig"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/mb_extra"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/intahwebz-utils"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/guzzle/guzzle"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/flack/UniversalFeedCreator"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/nrk/predis"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/rdlowrey/Amp"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/rdlowrey/Alert"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/symfony/EventDispatcher"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/zendframework/Component_ZendStdlib"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/zendframework/Component_ZendInputFilter"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/zendframework/Component_ZendFilter"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/zendframework/Component_ZendValidator"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/zendframework/Component_ZendPermissionsAcl"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/symfony/Yaml"
+        }
+
+    ],
+    "require-dependencies": true,
+    "require-all": true
+}

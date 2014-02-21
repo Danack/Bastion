@@ -10,10 +10,10 @@ class S3Sync {
 
     private $bucket;
     
-    private $allowedIP;
+    private $allowedIPAddresses;
 
-    function __construct($bucket, $allowedIP, S3Client $s3Client) {
-        $this->allowedIP = $allowedIP;
+    function __construct($bucket, $allowedIPAddresses, S3Client $s3Client) {
+        $this->allowedIPAddresses = $allowedIPAddresses;
         $this->bucket = $bucket;
         $this->s3Client = $s3Client;
     }
@@ -29,8 +29,9 @@ class S3Sync {
         ));
         //Content-Type header by passing a ContentType
         
-        //TODO - check for okay-ness
-        var_dump($result);
+        if (!$result) {
+            throw new \RuntimeException("Failed to upload file $sourceFile to S3 file $destFile");
+        }
 
         // We can poll the object until it is accessible
         $this->s3Client->waitUntilObjectExists(array(
@@ -49,9 +50,10 @@ class S3Sync {
             )
         ));
 
-        //todo check for okayness
-        var_dump($result);
-        
+        if (!$result) {
+            throw new \RuntimeException("Failed to upload text to S3 file $destFile");
+        }
+
         //Content-Type header by passing a ContentType
 
         // We can poll the object until it is accessible
@@ -81,6 +83,22 @@ class S3Sync {
 
     function updateACL() {
 
+
+
+        $generateCondition = function ($ipAddress) { 
+            return sprintf('"IpAddress": {
+                                "aws:SourceIp": "%s"
+                            }', $ipAddress);
+        };
+
+        $conditions = array_map($generateCondition, $this->allowedIPAddresses);
+        
+        $allowCondition = implode(', ', $conditions);
+
+        $allowCondition = '"Condition": {
+        '.$allowCondition.'
+        },';
+        
         $policy = '{
             "Id": "Policy1392421300612",
           "Statement": [
@@ -91,11 +109,7 @@ class S3Sync {
             ],
               "Effect": "Allow",
               "Resource": "arn:aws:s3:::satis.basereality.com/*",
-              "Condition": {
-                "IpAddress": {
-                    "aws:SourceIp": "'.$this->allowedIP.'"
-                }
-              },
+              '.$allowCondition.'
               "Principal": {
                 "AWS": [
                     "*"
@@ -104,6 +118,8 @@ class S3Sync {
             }
           ]
         }';
+
+        //var_dump($policy);
 
         $this->s3Client->putBucketPolicy(array(
             'Bucket' => $this->bucket,

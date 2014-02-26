@@ -11,9 +11,53 @@
     ],
     "repositories": [
         {
+            "packagist": false
+        },
+        {
             "type": "vcs",
             "url": "https://github.com/Danack/composer"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/symfony/Process"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/symfony/Finder"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/symfony/Console"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Seldaek/jsonlint"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/justinrainbow/json-schema"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/fabpot/Twig"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/composer/satis"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/symfony/EventDispatcher"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/guzzle/guzzle"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/aws/aws-sdk-php"
         }
+
     ],
     "require": {
         "php": ">=5.3.2",

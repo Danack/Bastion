@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "bcdc350c065fc37090e0fe4048e67434",
+    "hash": "feda75adf274c25690b7296c463992ab",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -49,7 +49,6 @@
                     "Aws": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "Apache-2.0"
             ],
@@ -71,6 +70,11 @@
                 "s3",
                 "sdk"
             ],
+            "support": {
+                "forum": "https://forums.aws.amazon.com/forum.jspa?forumID=80",
+                "issues": "https://github.com/aws/aws-sdk-php/issues",
+                "source": "https://github.com/aws/aws-sdk-php/tree/2.5.2"
+            },
             "time": "2014-01-30 00:45:15"
         },
         {
@@ -79,12 +83,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Danack/composer.git",
-                "reference": "abfefd1faae02a72dfa1259440fdf6d7305af736"
+                "reference": "20a7dcd02c09168dfaabcf0b2048531ecaac1db0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Danack/composer/zipball/abfefd1faae02a72dfa1259440fdf6d7305af736",
-                "reference": "abfefd1faae02a72dfa1259440fdf6d7305af736",
+                "url": "https://api.github.com/repos/Danack/composer/zipball/20a7dcd02c09168dfaabcf0b2048531ecaac1db0",
+                "reference": "20a7dcd02c09168dfaabcf0b2048531ecaac1db0",
                 "shasum": ""
             },
             "require": {
@@ -143,7 +147,7 @@
                 "issues": "https://github.com/composer/composer/issues",
                 "source": "https://github.com/Danack/composer/tree/GetRootComposerJson"
             },
-            "time": "2013-08-18 21:57:26"
+            "time": "2014-02-21 09:54:42"
         },
         {
             "name": "composer/satis",
@@ -175,7 +179,6 @@
                     "Composer\\Satis": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -183,8 +186,7 @@
                 {
                     "name": "Jordi Boggiano",
                     "email": "j.boggiano@seld.be",
-                    "homepage": "http://seld.be",
-                    "role": "Developer"
+                    "homepage": "http://seld.be"
                 },
                 {
                     "name": "Nils Adermann",
@@ -199,6 +201,10 @@
                 "package",
                 "repository"
             ],
+            "support": {
+                "source": "https://github.com/composer/satis/tree/master",
+                "issues": "https://github.com/composer/satis/issues"
+            },
             "time": "2014-02-04 11:44:56"
         },
         {
@@ -265,7 +271,6 @@
                     "Guzzle\\Tests": "tests/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -283,14 +288,18 @@
             "description": "Guzzle is a PHP HTTP client library and framework for building RESTful web service clients",
             "homepage": "http://guzzlephp.org/",
             "keywords": [
+                "HTTP client",
                 "client",
                 "curl",
                 "framework",
                 "http",
-                "http client",
                 "rest",
                 "web service"
             ],
+            "support": {
+                "source": "https://github.com/guzzle/guzzle/tree/v3.8.1",
+                "issues": "https://github.com/guzzle/guzzle/issues"
+            },
             "time": "2014-01-28 22:29:15"
         },
         {
@@ -316,16 +325,10 @@
                     "JsonSchema": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "NewBSD"
             ],
             "authors": [
-                {
-                    "name": "Igor Wiedler",
-                    "email": "igor@wiedler.ch",
-                    "homepage": "http://wiedler.ch/igor/"
-                },
                 {
                     "name": "Bruno Prieto Reis",
                     "email": "bruno.p.reis@gmail.com"
@@ -335,9 +338,12 @@
                     "email": "justin.rainbow@gmail.com"
                 },
                 {
+                    "name": "Igor Wiedler",
+                    "email": "igor@wiedler.ch"
+                },
+                {
                     "name": "Robert Schönthal",
-                    "email": "seroscho@googlemail.com",
-                    "homepage": "http://digitalkaoz.net"
+                    "email": "seroscho@googlemail.com"
                 }
             ],
             "description": "A library to validate a json schema.",
@@ -346,6 +352,10 @@
                 "json",
                 "schema"
             ],
+            "support": {
+                "source": "https://github.com/justinrainbow/json-schema/tree/v1.1.0",
+                "issues": "https://github.com/justinrainbow/json-schema/issues"
+            },
             "time": "2012-01-03 00:33:17"
         },
         {
@@ -374,7 +384,6 @@
                     "Seld\\JsonLint": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -382,8 +391,7 @@
                 {
                     "name": "Jordi Boggiano",
                     "email": "j.boggiano@seld.be",
-                    "homepage": "http://seld.be",
-                    "role": "Developer"
+                    "homepage": "http://seld.be"
                 }
             ],
             "description": "JSON Linter",
@@ -393,6 +401,10 @@
                 "parser",
                 "validator"
             ],
+            "support": {
+                "source": "https://github.com/Seldaek/jsonlint/tree/1.1.2",
+                "issues": "https://github.com/Seldaek/jsonlint/issues"
+            },
             "time": "2013-11-04 15:41:11"
         },
         {
@@ -402,12 +414,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Console.git",
-                "reference": "ceb261293b65e9df55b98a9665ef29d56de0c48f"
+                "reference": "afee08520a971c0f073bff89e1d456405e244c37"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Console/zipball/ceb261293b65e9df55b98a9665ef29d56de0c48f",
-                "reference": "ceb261293b65e9df55b98a9665ef29d56de0c48f",
+                "url": "https://api.github.com/repos/symfony/Console/zipball/afee08520a971c0f073bff89e1d456405e244c37",
+                "reference": "afee08520a971c0f073bff89e1d456405e244c37",
                 "shasum": ""
             },
             "require": {
@@ -430,16 +442,13 @@
                     "Symfony\\Component\\Console\\": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
                     "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com",
-                    "homepage": "http://fabien.potencier.org",
-                    "role": "Lead Developer"
+                    "email": "fabien@symfony.com"
                 },
                 {
                     "name": "Symfony Community",
@@ -448,7 +457,10 @@
             ],
             "description": "Symfony Console Component",
             "homepage": "http://symfony.com",
-            "time": "2014-02-11 13:52:21"
+            "support": {
+                "source": "https://github.com/symfony/Console/tree/master"
+            },
+            "time": "2014-02-18 15:41:30"
         },
         {
             "name": "symfony/event-dispatcher",
@@ -486,16 +498,13 @@
                     "Symfony\\Component\\EventDispatcher\\": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
                     "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com",
-                    "homepage": "http://fabien.potencier.org",
-                    "role": "Lead Developer"
+                    "email": "fabien@symfony.com"
                 },
                 {
                     "name": "Symfony Community",
@@ -504,6 +513,9 @@
             ],
             "description": "Symfony EventDispatcher Component",
             "homepage": "http://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/EventDispatcher/tree/v2.4.2"
+            },
             "time": "2014-02-11 13:52:09"
         },
         {
@@ -535,16 +547,13 @@
                     "Symfony\\Component\\Finder\\": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
                     "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com",
-                    "homepage": "http://fabien.potencier.org",
-                    "role": "Lead Developer"
+                    "email": "fabien@symfony.com"
                 },
                 {
                     "name": "Symfony Community",
@@ -553,6 +562,9 @@
             ],
             "description": "Symfony Finder Component",
             "homepage": "http://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/Finder/tree/v2.4.2"
+            },
             "time": "2014-01-07 13:28:54"
         },
         {
@@ -584,16 +596,13 @@
                     "Symfony\\Component\\Process\\": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
                     "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com",
-                    "homepage": "http://fabien.potencier.org",
-                    "role": "Lead Developer"
+                    "email": "fabien@symfony.com"
                 },
                 {
                     "name": "Symfony Community",
@@ -602,6 +611,9 @@
             ],
             "description": "Symfony Process Component",
             "homepage": "http://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/Process/tree/v2.4.2"
+            },
             "time": "2014-02-11 13:52:09"
         },
         {
@@ -632,7 +644,6 @@
                     "Twig_": "lib/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -644,14 +655,14 @@
                     "role": "Lead Developer"
                 },
                 {
-                    "name": "Armin Ronacher",
-                    "email": "armin.ronacher@active-4.com",
-                    "role": "Project Founder"
-                },
-                {
                     "name": "Twig Team",
                     "homepage": "https://github.com/fabpot/Twig/graphs/contributors",
                     "role": "Contributors"
+                },
+                {
+                    "name": "Armin Ronacher",
+                    "email": "armin.ronacher@active-4.com",
+                    "role": "Project Founder"
                 }
             ],
             "description": "Twig, the flexible, fast, and secure template language for PHP",
@@ -659,6 +670,11 @@
             "keywords": [
                 "templating"
             ],
+            "support": {
+                "forum": "https://groups.google.com/forum/#!forum/twig-users",
+                "source": "https://github.com/fabpot/Twig/tree/v1.15.1",
+                "issues": "https://github.com/fabpot/Twig/issues"
+            },
             "time": "2014-02-13 10:19:29"
         }
     ],

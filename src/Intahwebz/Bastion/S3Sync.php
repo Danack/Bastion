@@ -82,9 +82,6 @@ class S3Sync {
     }
 
     function updateACL() {
-
-
-
         $generateCondition = function ($ipAddress) { 
             return sprintf('"IpAddress": {
                                 "aws:SourceIp": "%s"
@@ -101,26 +98,24 @@ class S3Sync {
         
         $policy = '{
             "Id": "Policy1392421300612",
-          "Statement": [
-            {
-                "Sid": "Stmt1392421295029",
-              "Action": [
-                "s3:GetObject"
-            ],
-              "Effect": "Allow",
-              "Resource": "arn:aws:s3:::satis.basereality.com/*",
-              '.$allowCondition.'
-              "Principal": {
-                "AWS": [
-                    "*"
-                ]
-              }
-            }
-          ]
+            "Statement": [
+                {
+                    "Sid": "Stmt1392421295029",
+                    "Action": [
+                        "s3:GetObject"
+                    ],
+                    "Effect": "Allow",
+                    "Resource": "arn:aws:s3:::satis.basereality.com/*",
+                    '.$allowCondition.'
+                    "Principal": {
+                        "AWS": [
+                            "*"
+                        ]
+                    }
+                }
+            ]
         }';
-
-        //var_dump($policy);
-
+        
         $this->s3Client->putBucketPolicy(array(
             'Bucket' => $this->bucket,
             'Policy' => $policy

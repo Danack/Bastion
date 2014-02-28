@@ -12,36 +12,20 @@ if($included == false) {
     echo "Please copy the config file from 'copy-below-root', and put your credentials in it.";
     exit(-1);
 }
-//php vendor/bin/satis   zipsOutput 
 
-//require __DIR__.'/../src/bootstrap.php';
 
-//use Composer\Satis\Console\Application;
-//use Symfony\Component\Console\Input\ArrayInput;
-////
-//$application = new Application();
-//
-//$arguments = array(
-//    'command'       => 'build',
-//    'file'          => 'satis-zips.json',
-//    'output-dir'    => './zipsOutput/laravel',
-//    '-vv'           => true,
-//);
-//
-////Create the commands
-//$input = new ArrayInput($arguments);
-//
-//$application->run($input);
-
+//this is hard coded - to change this would also require changing it in the bash script.
+$outputDirectory = "./zipsOutput/packages";
+$absolutePath = dirname(realpath($outputDirectory));
 
 $src = "./zipsOutput/packages.json";
 $text = file_get_contents($src);
-$text = str_replace("/documents/projects/github/Bastion/Bastion/zipsOutput", "http://satis.basereality.com", $text);
+$text = str_replace($absolutePath, $siteURL, $text);
 file_put_contents($src, $text);
 
 $src = "./zipsOutput/index.html";
 $text = file_get_contents($src);
-$text = str_replace("/documents/projects/github/Bastion/Bastion/zipsOutput", "", $text);
+$text = str_replace($absolutePath, "", $text);
 file_put_contents($src, $text);
 
 

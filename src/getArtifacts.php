@@ -24,10 +24,11 @@ if ((isset($listOfRepositories) == false) || (is_array($listOfRepositories) == f
 }
 
 
+
 $artifactFetcher = new ArtifactFetcher(
     $ignoreList,
     $usingList,
-    $outputDirectory,
+    "./zipsOutput/packages", //$outputDirectory,
     $accessToken
 );
 

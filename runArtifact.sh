@@ -4,13 +4,14 @@ set -e
 
 php ./src/getArtifacts.php
 
-#why the heck does this even attempt to run scripts?
 php vendor/bin/satis build satis-zips.json zipsOutput -vv
- 
-# --no-scripts
 
 php ./src/fixPaths.php
 
-# php syncArtifactBuild.php
-# php -S localhost:8000 -t zipsOutput/
+php ./src/syncArtifactBuild.php
+
+
+# If you wish to test your satis repository locally, and
+# don't have a local webserver setup, you can test it with 
+# PHP's built-in webserver  
 # php -S localhost:80 -t zipsOutput/

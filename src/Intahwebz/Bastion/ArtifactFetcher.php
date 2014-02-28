@@ -53,6 +53,8 @@ class ArtifactFetcher {
         $this->zipsDirectory = $zipsDirectory;
         $this->accessToken = $accessToken;
         $this->usingListFilename = $usingListFilename;
+        
+        file_put_contents($usingListFilename, '');
     }
 
     /**
@@ -85,6 +87,16 @@ class ArtifactFetcher {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        
+        //Do not disable the options below. If the SSL doesn't verify, it
+        //means that you need to update your certificate file e.g. from
+        //http://curl.haxx.se/docs/caextract.html and add it to your ini file.
+        //curl.cainfo=/etc/php/cacert.pem
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        //2 to verify that the common name matches
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        
         $fileContents = curl_exec($ch);
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);

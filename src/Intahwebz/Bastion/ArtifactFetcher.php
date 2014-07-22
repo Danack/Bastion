@@ -4,6 +4,7 @@ namespace Intahwebz\Bastion;
 
 use Composer\Package\Version\VersionParser;
 
+
 function ensureDirectoryExists($filePath) {
     $pathSegments = array();
 
@@ -29,7 +30,6 @@ function ensureDirectoryExists($filePath) {
 
     foreach ($pathSegments as $segment) {
         if (file_exists($segment) === false) {
-            //echo "Had to create directory $segment";
             $result = mkdir($segment);
 
             if ($result == false) {
@@ -74,10 +74,10 @@ class ArtifactFetcher {
      * @return mixed
      */
     function getTagsForRepo($repo) {
-        $tagPath = "https://api.github.com/repos/" . $repo . "/tags";
+        $tagPath = "https://api.github.com/repos/" . $repo . "/tags?per_page=2000";
 
         if ($this->accessToken) {
-            $tagPath .= '?access_token=' . $this->accessToken;
+            $tagPath .= '&access_token=' . $this->accessToken;
         }
 
         $ch = curl_init($tagPath);
@@ -88,7 +88,6 @@ class ArtifactFetcher {
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        
         //Do not disable the options below. If the SSL doesn't verify, it
         //means that you need to update your certificate file e.g. from
         //http://curl.haxx.se/docs/caextract.html and add it to your ini file.
@@ -103,11 +102,11 @@ class ArtifactFetcher {
 
         if ($status != 200 || (!$fileContents)) {
             echo "try $tagPath \n";
-            throw new \Exception("Failed to get tag list for repo ".$repo);
+            throw new \Exception("Failed to get tag list for repo ".$repo. "status is $status");
         }
 
         $tagContentArray = json_decode($fileContents, true);
-
+        
         return $tagContentArray;
     }
 
@@ -135,8 +134,7 @@ class ArtifactFetcher {
             if (strpos($tagName, $zendReleasePrefix) === 0) {
                 $tagName = substr($tagName, strlen($zendReleasePrefix));
             }
-
-            //$repoTagName = str_replace("/", "_", $repo) . '_' . $tagName;
+            
             $repoTagName = $repo.'/'.str_replace("/", "_", $repo).'_' .$tagName;
 
             $zipFilename = $this->zipsDirectory . '/' . $repoTagName . '.zip';
@@ -193,7 +191,7 @@ class ArtifactFetcher {
         }
 
         ensureDirectoryExists($filename);
-        
+
         rename($tmpfname, $filename);
     }
 

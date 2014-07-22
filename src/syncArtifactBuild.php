@@ -20,12 +20,15 @@ $sync = new S3Sync(
 );
 
 $sync->putFile("./zipsOutput/index.html", 'index.html');
+$sync->putFile("./zipsOutput/packages.json", 'packages.json');
+$sync->syncDirectory("./zipsOutput/packages/", "packages");
+$sync->updateACL(false);
+
+
+
+
 
 //$text = file_get_contents("./zipsOutput/packages.json");
 //$text = str_replace("/documents/projects/github/Bastion/Bastion/zipsOutput", "", $text);
 //file_put_contents("./zipsOutput/packages.json", $text);
-
-$sync->putFile("./zipsOutput/packages.json", 'packages.json');
 //$sync->putFile("./zipsOutput/packages.json", 'packages.json');
-$sync->syncDirectory("./zipsOutput/packages/", "packages");
-$sync->updateACL();

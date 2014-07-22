@@ -81,7 +81,7 @@ class S3Sync {
         );
     }
 
-    function updateACL() {
+    function updateACL($restrictByIP) {
         $generateCondition = function ($ipAddress) { 
             return sprintf('"IpAddress": {
                                 "aws:SourceIp": "%s"
@@ -92,9 +92,17 @@ class S3Sync {
         
         $allowCondition = implode(', ', $conditions);
 
-        $allowCondition = '"Condition": {
-        '.$allowCondition.'
-        },';
+        
+        $allowCondition = '';
+        
+        if ($restrictByIP) {
+            //Well this is ugly - this should whole function should
+            //be refactored to separate classes to represent the conditions
+            //But as this is a proof of concept...not today.
+            $allowCondition = '"Condition": {
+            '.$allowCondition.'
+            },';
+        }
         
         $policy = '{
             "Id": "Policy1392421300612",
@@ -115,7 +123,7 @@ class S3Sync {
                 }
             ]
         }';
-        
+
         $this->s3Client->putBucketPolicy(array(
             'Bucket' => $this->bucket,
             'Policy' => $policy

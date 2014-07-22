@@ -7,16 +7,16 @@
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "2.5.2",
+            "version": "2.5.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "f720d799ea385f86ef33966908a1217dda5e49ce"
+                "reference": "de3dc8b9c7ce8ec70fc6184a8b3b4aff6728ae17"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/f720d799ea385f86ef33966908a1217dda5e49ce",
-                "reference": "f720d799ea385f86ef33966908a1217dda5e49ce",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/de3dc8b9c7ce8ec70fc6184a8b3b4aff6728ae17",
+                "reference": "de3dc8b9c7ce8ec70fc6184a8b3b4aff6728ae17",
                 "shasum": ""
             },
             "require": {
@@ -73,9 +73,9 @@
             "support": {
                 "forum": "https://forums.aws.amazon.com/forum.jspa?forumID=80",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/2.5.2"
+                "source": "https://github.com/aws/aws-sdk-php/tree/2.5.3"
             },
-            "time": "2014-01-30 00:45:15"
+            "time": "2014-02-27 20:50:34"
         },
         {
             "name": "composer/composer",
@@ -155,12 +155,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/satis.git",
-                "reference": "6eee5a315358efff5a4fbd59515680e2082ddede"
+                "reference": "eed9a2e763d89be19b57f55486b62f12d97e6aab"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/satis/zipball/6eee5a315358efff5a4fbd59515680e2082ddede",
-                "reference": "6eee5a315358efff5a4fbd59515680e2082ddede",
+                "url": "https://api.github.com/repos/composer/satis/zipball/eed9a2e763d89be19b57f55486b62f12d97e6aab",
+                "reference": "eed9a2e763d89be19b57f55486b62f12d97e6aab",
                 "shasum": ""
             },
             "require": {
@@ -205,7 +205,7 @@
                 "source": "https://github.com/composer/satis/tree/master",
                 "issues": "https://github.com/composer/satis/issues"
             },
-            "time": "2014-02-04 11:44:56"
+            "time": "2014-02-27 15:45:34"
         },
         {
             "name": "guzzle/guzzle",

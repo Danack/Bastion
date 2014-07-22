@@ -2,13 +2,13 @@
 
 set -e
 
-php ./src/getArtifacts.php
+/usr/local/bin/php -d allow_url_fopen=On ./src/getArtifacts.php
 
-php vendor/bin/satis build satis-zips.json zipsOutput -vv
+/usr/local/bin/php -d allow_url_fopen=On vendor/bin/satis build satis-zips.json zipsOutput -vv
 
-php ./src/fixPaths.php
+/usr/local/bin/php -d allow_url_fopen=On ./src/fixPaths.php
 
-php ./src/syncArtifactBuild.php
+/usr/local/bin/php -d allow_url_fopen=On ./src/syncArtifactBuild.php
 
 
 # If you wish to test your satis repository locally, and

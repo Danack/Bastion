@@ -1,8 +1,10 @@
 <?php
 
-use Intahwebz\Bastion\ArtifactFetcher;
+use Bastion\ArtifactFetcher;
 
-require_once(realpath(__DIR__).'/../vendor/autoload.php');
+
+use Artax\AsyncClient;
+use Alert\ReactorFactory;
 
 $accessToken = false;
 $included = include_once(realpath(__DIR__)."/../../config.php");
@@ -25,13 +27,10 @@ if ((isset($listOfRepositories) == false) || (is_array($listOfRepositories) == f
 
 
 
-$artifactFetcher = new ArtifactFetcher(
-    $ignoreList,
-    $usingList,
-    "./zipsOutput/packages", //$outputDirectory,
-    $accessToken
-);
 
-$artifactFetcher->downloadZipArtifacts(
-    $listOfRepositories
-);
+
+
+
+$reactor->tick();
+
+echo "fin.";

@@ -1,7 +1,7 @@
 {
-    "name": "intahwebz/bastion",
+    "name": "danack/bastion",
     "description": "A satis-factory.",
-    "keywords": ["classloader", "autoloader", "optimized"],
+    "keywords": ["satis", "library", "archiver"],
     "license": "MIT",
     "authors": [
         {
@@ -19,6 +19,38 @@
         },
         {
             "type": "vcs",
+            "url": "https://github.com/Danack/DanackCode"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/http2"
+        },
+        {
+            "type": "vcs",
+            "url": "/documents/projects/github/GithubArtaxService"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/Danack/ArtaxServiceBuilder"
+        },
+        {
+             "type": "vcs",
+             "url": "https://github.com/rdlowrey/artax"
+        },
+        {
+             "type": "vcs",
+             "url": "https://github.com/DaveRandom/Addr"
+        },
+        {
+             "type": "vcs",
+             "url": "https://github.com/rdlowrey/alert"
+        },
+        {
+             "type": "vcs",
+             "url": "https://github.com/daverandom/libdns"
+        },
+        {
+            "type": "vcs",
             "url": "https://github.com/symfony/Process"
         },
         {
@@ -27,7 +59,7 @@
         },
         {
             "type": "vcs",
-            "url": "https://github.com/symfony/Console"
+            "url": "https://github.com/maximebf/ConsoleKit"
         },
         {
             "type": "vcs",
@@ -56,8 +88,11 @@
         {
             "type": "vcs",
             "url": "https://github.com/aws/aws-sdk-php"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/nrk/predis"
         }
-
     ],
     "require": {
         "php": ">=5.3.2",
@@ -65,10 +100,14 @@
         "composer/composer": "dev-GetRootComposerJson as 1.0.0",
         "composer/satis": "dev-master",
         "twig/twig": "~1.7",
-
-        "symfony/console": "~2.1@dev"
+        "rdlowrey/artax": "dev-master as 0.7.0",
+        "danack/githubartaxservice": "dev-master",
+        "danack/danack-code": ">=2.4.4",
+        "maximebf/consolekit": "1.0.3"
     },
     "autoload": {
-        "psr-0": { "Intahwebz\\Bastion": "src/" }
-    }
+        "psr-0": { "Bastion": "lib/" }
+    },
+
+    "minimum-stability": "dev"
 }

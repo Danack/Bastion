@@ -1,6 +1,6 @@
 <?php
 
-namespace Intahwebz\Bastion;
+namespace Bastion;
 
 use Aws\S3\S3Client;
 
@@ -18,6 +18,10 @@ class S3Sync {
         $this->s3Client = $s3Client;
     }
 
+    /**
+     * @param $sourceFile
+     * @param $destFile
+     */
     function putFile($sourceFile, $destFile) {
 
         $result = $this->s3Client->putObject(array(
@@ -40,6 +44,10 @@ class S3Sync {
         ));
     }
 
+    /**
+     * @param $sourceText
+     * @param $destFile
+     */
     function putDataAsFile($sourceText, $destFile) {
 
         $result = $this->s3Client->putObject(array(
@@ -63,6 +71,10 @@ class S3Sync {
         ));
     }
 
+    /**
+     * @param $srcDirectory
+     * @param $destDirectory
+     */
     function syncDirectory($srcDirectory, $destDirectory) {
 
         //Make sure folder exists
@@ -81,6 +93,9 @@ class S3Sync {
         );
     }
 
+    /**
+     * @param $restrictByIP
+     */
     function updateACL($restrictByIP) {
         $generateCondition = function ($ipAddress) { 
             return sprintf('"IpAddress": {
@@ -91,7 +106,6 @@ class S3Sync {
         $conditions = array_map($generateCondition, $this->allowedIPAddresses);
         
         $allowCondition = implode(', ', $conditions);
-
         
         $allowCondition = '';
         

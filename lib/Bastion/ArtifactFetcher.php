@@ -21,7 +21,7 @@ class ArtifactFetcher {
     /**
      * @var \Bastion\URLFetcher
      */
-    private $fileFetcher;
+    private $urlFetcher;
 
     /**
      * @var \Bastion\Config
@@ -36,7 +36,7 @@ class ArtifactFetcher {
     ) {
         $this->githubAPI = $githubAPI;
         $this->repoInfo = $repoInfo;
-        $this->fileFetcher = $fileFetcher;
+        $this->urlFetcher = $fileFetcher;
         $this->config = $config;
     }
 
@@ -129,17 +129,18 @@ class ArtifactFetcher {
      * @throws \Exception
      */
     function getRepoArtifact($owner, $repo, \GithubService\Model\RepoTag $repoTag) {
-
         if ($this->config->isDryRun() == true) {
             return;
         }
-
         list(, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
-
         echo "getRepoArtifact: zipFilename $zipFilename ".PHP_EOL;
-
         if (file_exists($zipFilename) == false) {
-            $this->downloadRepoTag($owner, $repo, $repoTag);
+            $responseCallback = function (\Artax\Response $response) use ($owner, $repo, $repoTag) {
+                $this->processDownloadedFileResponse($response, $owner, $repo, $repoTag);
+            };
+
+            echo "Starting download".PHP_EOL;
+            $this->urlFetcher->downloadFile($repoTag->zipballURL, $responseCallback);
         }
         else {
             echo "$zipFilename already exists.".PHP_EOL;
@@ -197,22 +198,6 @@ class ArtifactFetcher {
         echo "Download complete of $repoTagName".PHP_EOL;
 
         $this->repoInfo->addRepoTagToUsingList($repoTagName);
-    }
-    
-    /**
-     * @param $owner
-     * @param $repo
-     * @param $repoTag
-     * @param $zipFilename
-     */
-    function downloadRepoTag($owner, $repo, \GithubService\Model\RepoTag $repoTag) {
-        echo "Download zipball: ".$repoTag->zipballURL.PHP_EOL;
-
-        $responseCallback = function (\Artax\Response $response) use ($owner, $repo, $repoTag) {
-            $this->processDownloadedFileResponse($response, $owner, $repo, $repoTag);
-        };
-        
-        $this->fileFetcher->downloadFile($repoTag->zipballURL, $responseCallback);
     }
 
     /**

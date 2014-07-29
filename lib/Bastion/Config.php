@@ -48,6 +48,26 @@ class Config {
     public function getRepoList() {
         return $this->repoList;
     }
+    
+    public function getBucketName() {
+        return $this->bucketName;
+    }
+    
+    public function getS3Key() {
+        return $this->s3Key;
+    }
+
+    public function getS3Secret() {
+        return $this->s3secret;
+    }
+
+    public function getS3Region() {
+        return $this->s3Region;
+    }
+    
+    public function getRestrictionClass() {
+        return $this->restrictionClass;
+    }
 }
 
  

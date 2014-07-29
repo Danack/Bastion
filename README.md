@@ -1,44 +1,21 @@
 ## Bastion
 
 
-Two implementations of running a Satis server without using Packagist, with the capability of uploading the files to be uploaded to S3.
-
-
-### Composer managed packages
-
-Composer downloads and manages archiving of code from Github. Works great until you want to be able to inspect the packages, or have a library that has a non-ascii char in the project.
-
- 
-### Zips artifacts
-
-Composers dependency resolver is not involved in any part of this and all dependencies need to be listed explicitly.
-
-Slightly more work, but easier to manage exact downloads and doesn't have 'surprises'. When deploying code, I hate surprises.
-
+Run your own Packagist server, so that you can do Composer update locally, 
 
 
 ### Setup
 
-* Copy the files from `copy-below-root` to the directory above Bastion.
+* Run ./src/bastion.php It will ask you to provide a Github access token
 
-* Put your AWS key and secret in ../config.php
+* Edit bastionConfig.php to list the Github repos you want to be available to install.
 
-Either
+* TODO get Amazon S3 storage working again.
 
-* List the repositories that you want to use in satis-public.json if you want Composer to download the files, and also grab the dependencies.
-
-* Run `runSatis.sh`
-
-Or
-
-* List the Github repository names in repos.config.php if you want to have Bastion download the zip files, and manually list the dependencies yourself.
-
-* Run `runArtifact.sh`
+* Run ./src/bastion.php again. Now that everything is stup it will download the tagged versions of the libraries as zip balls, before uploading them to S3.
 
 
-
-You will now have a satis repository uploaded to S3. You can also run this satis provider locally, with the PHP builtin server `php -S localhost:8000 -t zipsOutput/` which allows you to test the repo by doing an update locally if you wish to.
-
+You will now have a satis repository uploaded to S3. You can also run this satis provider locally, with the PHP builtin server `php -S localhost:8000 -t zipsOutput/` .
 
 
 ### Setting up S3 static satis DNS 

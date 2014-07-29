@@ -10,33 +10,27 @@ $console = new Console();
 
 if ($config == null) {
     generateConfig($console);
+    return;
 }
 
 
-
-echo "echo processing artifacts\n";
-
-$ignoreList = realpath(__DIR__)."/../ignoreList.txt";
-$usingList = realpath(__DIR__)."/../usingList.txt";
-
-getArtifacts($ignoreList, $usingList, $config);
-
-
-//syncArtifactBuild(AWS_SERVICES_KEY, AWS_SERVICES_SECRET, $allowedIPAddresses);
+//echo "echo processing artifacts\n";
+$injector = createInjector($config);
 
 //$artifactFetcher->processRemoveList("./removeList.txt");
-//$console = new Console(array(
-//                           'hello' => 'HelloWorldCommand',
-//                           'SayHelloCommand',
-//                           'SayCommand',
-//                           'progress'
-//                       ));
-//
-//$console->run();
+
+//Step 1 - download everything
+$injector->execute('getArtifacts',[':listOfRepositories' => $config->getRepoList()]);
+
+//Step 2 - fix the broken paths
+fixPaths($outputDirectory, $siteURL);
+
+//Step 3 upload all the things
+$injector->execute('syncArtifactBuild');
 
 
-/*  
 
+/*
 
     / * *
      * @param $removeListName

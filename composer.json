@@ -39,6 +39,10 @@
         },
         {
              "type": "vcs",
+             "url": "https://github.com/rdlowrey/auryn"
+        },
+        {
+             "type": "vcs",
              "url": "https://github.com/DaveRandom/Addr"
         },
         {
@@ -103,7 +107,8 @@
         "rdlowrey/artax": "dev-master as 0.7.0",
         "danack/githubartaxservice": "dev-master",
         "danack/danack-code": ">=2.4.4",
-        "maximebf/consolekit": "1.0.3"
+        "maximebf/consolekit": "1.0.3",
+        "rdlowrey/auryn": ">=0.13.0",
     },
     "autoload": {
         "psr-0": { "Bastion": "lib/" }

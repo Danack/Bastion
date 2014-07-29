@@ -3,27 +3,39 @@
 namespace Bastion;
 
 use Aws\S3\S3Client;
+use Bastion\S3ACLGenerator;
 
-class S3Sync {
 
+
+class S3Sync implements Uploader {
+
+    /**
+     * @var S3Client
+     */
     private $s3Client;
+    
+    /** @var  S3ACLGenerator */
+    private $s3ACLGenerator;
 
     private $bucket;
-    
-    private $allowedIPAddresses;
 
-    function __construct($bucket, $allowedIPAddresses, S3Client $s3Client) {
-        $this->allowedIPAddresses = $allowedIPAddresses;
+    /**
+     * @var S3ACLGenerator
+     */
+    private $conditionGenerator;
+
+    function __construct($bucket, S3ACLGenerator $conditionGenerator, S3Client $s3Client) {
         $this->bucket = $bucket;
+        $this->conditionGenerator = $conditionGenerator;
         $this->s3Client = $s3Client;
     }
 
     /**
+     * 
      * @param $sourceFile
      * @param $destFile
      */
     function putFile($sourceFile, $destFile) {
-
         $result = $this->s3Client->putObject(array(
             'Bucket'     => $this->bucket,
             'Key'        => $destFile,
@@ -31,7 +43,6 @@ class S3Sync {
             'Metadata'   => array(
             )
         ));
-        //Content-Type header by passing a ContentType
         
         if (!$result) {
             throw new \RuntimeException("Failed to upload file $sourceFile to S3 file $destFile");
@@ -45,11 +56,11 @@ class S3Sync {
     }
 
     /**
+     * Upload a string to a file
      * @param $sourceText
      * @param $destFile
      */
     function putDataAsFile($sourceText, $destFile) {
-
         $result = $this->s3Client->putObject(array(
             'Bucket'     => $this->bucket,
             'Key'        => $destFile,
@@ -61,9 +72,7 @@ class S3Sync {
         if (!$result) {
             throw new \RuntimeException("Failed to upload text to S3 file $destFile");
         }
-
-        //Content-Type header by passing a ContentType
-
+        
         // We can poll the object until it is accessible
         $this->s3Client->waitUntilObjectExists(array(
             'Bucket' => $this->bucket,
@@ -72,11 +81,12 @@ class S3Sync {
     }
 
     /**
+     * Synchronise a directory, i.e. making all files that exist in the local
+     * directory to the remote directory
      * @param $srcDirectory
      * @param $destDirectory
      */
     function syncDirectory($srcDirectory, $destDirectory) {
-
         //Make sure folder exists
         $this->s3Client->putObject(array(
             'Bucket'     => $this->bucket,
@@ -94,30 +104,11 @@ class S3Sync {
     }
 
     /**
+     * 
      * @param $restrictByIP
      */
-    function updateACL($restrictByIP) {
-        $generateCondition = function ($ipAddress) { 
-            return sprintf('"IpAddress": {
-                                "aws:SourceIp": "%s"
-                            }', $ipAddress);
-        };
-
-        $conditions = array_map($generateCondition, $this->allowedIPAddresses);
-        
-        $allowCondition = implode(', ', $conditions);
-        
-        $allowCondition = '';
-        
-        if ($restrictByIP) {
-            //Well this is ugly - this should whole function should
-            //be refactored to separate classes to represent the conditions
-            //But as this is a proof of concept...not today.
-            $allowCondition = '"Condition": {
-            '.$allowCondition.'
-            },';
-        }
-        
+    function finishProcessing() {
+        $allowCondition = $this->s3ACLGenerator->generateConditonBlock();
         $policy = '{
             "Id": "Policy1392421300612",
             "Statement": [

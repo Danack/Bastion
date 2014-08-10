@@ -7,20 +7,48 @@ namespace Bastion;
 class Config {
 
     private $zipsDirectory;
-    
     private $dryRun;
-
     private $accessToken;
-    
     private $repoList;
+    private $restrictionClass;
+    private $bucketName;
+    private $s3Key;
+    private $s3Secret;
+    private $s3Region;
     
-    function __construct($zipsDirectory, $dryRun, $accessToken, $repoList) {
-        $this->zipsDirectory = $zipsDirectory;
+    function __construct(
+        $zipsDirectory, 
+        $dryRun, 
+        $accessToken, 
+        $repoList, 
+        $restrictionClass, 
+        $bucketName,
+        $s3Key,
+        $s3Secret,
+        $s3Region
+    ) {
+
+        if (strpos($zipsDirectory, '/') === 0) {
+            //Absolute path
+            $this->zipsDirectory = $zipsDirectory;
+        }
+        else {
+            //Relative path, correct it to be relative the root directory of this project.
+            $bastionRootPath = dirname(__FILE__).'/../../';
+            $this->zipsDirectory = realpath($bastionRootPath.$zipsDirectory);
+        }
+        
+        
         $this->dryRun = $dryRun;
         $this->accessToken = $accessToken;
         $this->repoList = $repoList;
+        $this->restrictionClass = $restrictionClass;
+        $this->bucketName = $bucketName;
+        $this->s3Key = $s3Key;
+        $this->s3Secret = $s3Secret;
+        $this->s3Region = $s3Region;
     }
-
+    
     /**
      * @return bool
      */
@@ -31,7 +59,7 @@ class Config {
     /**
      * @return string
      */
-    public function getZipsDirectory() {
+    public function getOutputDirectory() {
         return $this->zipsDirectory;
     }
 
@@ -49,6 +77,10 @@ class Config {
         return $this->repoList;
     }
     
+    public function getSiteName() {
+        return $this->bucketName;   
+    }
+    
     public function getBucketName() {
         return $this->bucketName;
     }
@@ -58,7 +90,7 @@ class Config {
     }
 
     public function getS3Secret() {
-        return $this->s3secret;
+        return $this->s3Secret;
     }
 
     public function getS3Region() {

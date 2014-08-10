@@ -1,5 +1,7 @@
+
 {
-    "name": "Intahwebz package repository",
+    "name": "Bastion package repository",
+    "description": "This file is auto-generated to allow Satis to run.",
     "homepage": "http://satis.basereality.com/zipsOutput",
     "repositories": [
         {
@@ -7,8 +9,9 @@
         },
         {
             "type": "artifact",
-            "url": "zipsOutput/packages/"
+            "url": "/documents/projects/github/Bastion/Bastion/zipsOutput/packages/"
         }
     ],
     "require-all": true
 }
+    

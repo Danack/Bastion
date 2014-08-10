@@ -45,7 +45,7 @@ class ArtifactFetcher {
      * @return string
      */
     function getZipFilename($repoTagName) {
-        $zipFilename = $this->config->getZipsDirectory() . '/' . $repoTagName . '.zip';
+        $zipFilename = $this->config->getOutputDirectory().'/packages/'.$repoTagName.'.zip';
 
         return $zipFilename;
     }
@@ -132,8 +132,8 @@ class ArtifactFetcher {
         if ($this->config->isDryRun() == true) {
             return;
         }
-        list(, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
-        echo "getRepoArtifact: zipFilename $zipFilename ".PHP_EOL;
+        list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
+        echo "getRepoArtifact: $repoTagName ".PHP_EOL;
         if (file_exists($zipFilename) == false) {
             $responseCallback = function (\Artax\Response $response) use ($owner, $repo, $repoTag) {
                 $this->processDownloadedFileResponse($response, $owner, $repo, $repoTag);

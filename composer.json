@@ -14,6 +14,18 @@
             "packagist": false
         },
         {
+            "type": "package",
+            "package": {
+                "name": "bagder/ca-bundle",
+                "version": "dev-master",
+                "source": {
+                    "url": "https://github.com/bagder/ca-bundle",
+                    "type": "git",
+                    "reference": "origin/master"
+                }
+            }
+        },
+        {
             "type": "vcs",
             "url": "https://github.com/Danack/composer"
         },
@@ -32,6 +44,14 @@
         {
             "type": "vcs",
             "url": "https://github.com/Danack/ArtaxServiceBuilder"
+        },
+        {
+             "type": "vcs",
+             "url": "https://github.com/rdlowrey/acesync"
+        },
+        {
+             "type": "vcs",
+             "url": "https://github.com/rdlowrey/after"
         },
         {
              "type": "vcs",
@@ -73,18 +93,12 @@
             "type": "vcs",
             "url": "https://github.com/justinrainbow/json-schema"
         },
-        {
-            "type": "vcs",
-            "url": "https://github.com/fabpot/Twig"
-        },
+
         {
             "type": "vcs",
             "url": "https://github.com/composer/satis"
         },
-        {
-            "type": "vcs",
-            "url": "https://github.com/symfony/EventDispatcher"
-        },
+
         {
             "type": "vcs",
             "url": "https://github.com/guzzle/guzzle"
@@ -103,16 +117,16 @@
         "aws/aws-sdk-php": "2.5.*",
         "composer/composer": "dev-GetRootComposerJson as 1.0.0",
         "composer/satis": "dev-master",
-        "twig/twig": "~1.7",
-        "rdlowrey/artax": "dev-master as 0.7.0",
-        "danack/githubartaxservice": "dev-master",
+        "danack/githubartaxservice": "~0.1.2",
         "danack/danack-code": ">=2.4.4",
         "maximebf/consolekit": "1.0.3",
         "rdlowrey/auryn": ">=0.13.0",
+        "rdlowrey/artax": "dev-dev as 0.7.2",
+        "bagder/ca-bundle": "dev-master"
+
     },
     "autoload": {
         "psr-0": { "Bastion": "lib/" }
     },
-
     "minimum-stability": "dev"
 }

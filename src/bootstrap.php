@@ -3,12 +3,18 @@
 use Bastion\S3Sync;
 use Aws\S3\S3Client;
 use Bastion\ArtifactFetcher;
-use Artax\AsyncClient;
+//use Artax\AsyncClient;
+use Artax\Client as ArtaxClient;
+use Alert\Reactor;
 use Alert\ReactorFactory;
 use ConsoleKit\Console;
 use Bastion\Config;
 use Bastion\Uploader;
 use ConsoleKit\Widgets\Dialog;
+use Bastion\BastionException;
+
+use Artax\Ext\Progress\ProgressExtension;
+use Artax\Ext\Progress\ProgressDisplay;
 
 require_once(realpath(__DIR__).'/../vendor/autoload.php');
 
@@ -18,7 +24,7 @@ define('CONFIG_FILE_NAME', 'bastionConfig.php');
 /**
  * Class DebugAsyncClient
  */
-class DebugAsyncClient extends AsyncClient {
+class DebugAsyncClient extends ArtaxClient {
 
     function request($uriOrRequest, callable $onResponse, callable $onError) {
         echo "Making request: ";
@@ -26,8 +32,8 @@ class DebugAsyncClient extends AsyncClient {
             echo "string: ". $uriOrRequest;
         }
         else if ($uriOrRequest instanceof \Artax\Request) {
-            echo "Request instance: ".$uriOrRequest->getUri();
-            echo "\n".toCurl($uriOrRequest);
+            echo "Request uri: ".$uriOrRequest->getUri();
+            //echo "\n".toCurl($uriOrRequest);
         }
         else {
             echo "class ".get_class($uriOrRequest);
@@ -50,7 +56,7 @@ function writeConfig(
     $zipsDirectory,
     $s3Key,
     $s3Secret,
-    $region,
+    $s3Region,
     $domainName,
     $uploaderClass,
     $restrictionClass
@@ -69,7 +75,7 @@ function writeConfig(
     \$accessToken = $tokenString;
     \$s3Key = '$s3Key';
     \$s3Secret = '$s3Secret';
-    \$region = '$region';
+    \$s3Region = '$s3Region';
     \$domainName = '$domainName';
     
     // Uploader class should be one of 
@@ -153,15 +159,13 @@ function askForRegion(Dialog $dialog) {
 function askForS3Key(Dialog $dialog) {
     echo "Please enter the AWS key for S3 to be able to upload files.".PHP_EOL;
 
-    while ($token == null) {
-        $enteredS3Token = $dialog->ask('Please enter your S3 token:');
-        if (strlen(trim($enteredToken)) < 8) {
-            echo "That doesn't look like a token dude.".PHP_EOL;
-        }
-        else {
-            return $enteredS3Token;
-        }
-    };
+    $enteredS3Token = $dialog->ask('Please enter your S3 token:');
+    if (strlen(trim($enteredS3Token)) < 8) {
+        echo "That doesn't look like a token dude.".PHP_EOL;
+    }
+    else {
+        return $enteredS3Token;
+    }
 
     return null;
 }
@@ -174,17 +178,15 @@ function askForS3Key(Dialog $dialog) {
 function askForS3Secret(Dialog $dialog) {
     echo "Please enter the AWS secret for S3 to be able to upload files.".PHP_EOL;
 
-    while ($token == null) {
+    while (true) {
         $enteredS3Token = $dialog->ask('Please enter your S3 secret:');
-        if (strlen(trim($enteredToken)) < 8) {
+        if (strlen(trim($enteredS3Token)) < 8) {
             echo "That doesn't look like a secret dude.".PHP_EOL;
         }
         else {
             return $enteredS3Token;
         }
     };
-
-    return null;
 }
 
 /**
@@ -192,16 +194,24 @@ function askForS3Secret(Dialog $dialog) {
  * @return string
  */
 function askForDomainName(Dialog $dialog) {
-
-//    $enteredDomain = null;
-//    
-//    while ($enteredDomain == null) {
-        $enteredDomain = $dialog->ask('Please enter your domain name:');
-        if (strlen(trim($enteredDomain)) > 0) {
-            return trim($enteredDomain);
-        }
-    //};
+    $enteredDomain = $dialog->ask('Please enter your domain name:');
+    if (strlen(trim($enteredDomain)) > 0) {
+        return trim($enteredDomain);
+    }
 }
+
+/**
+ * @param Dialog $dialogue
+ * @return string
+ */
+function askForBucketName(Dialog $dialog) {
+    $enteredDomain = $dialog->ask('Please enter the bucket name:');
+    if (strlen(trim($enteredDomain)) > 0) {
+        return trim($enteredDomain);
+    }
+}
+
+
 
 
 /**
@@ -364,7 +374,7 @@ function generateConfig(Console $console) {
 
 
 /**
- * @return \Bastion\Config|null
+ * @return \Bastion\Config
  */
 function getConfig() {
 
@@ -372,34 +382,11 @@ function getConfig() {
         realpath(__DIR__)."/../../".CONFIG_FILE_NAME, //outside of project
         realpath(__DIR__)."/../".CONFIG_FILE_NAME, //project root
     ];
-    
+
 
     foreach ($configLocations as $configLocation) {
         if (file_exists($configLocation) == true) {
-            $zipsDirectory = null;
-            $accessToken = null;
-            $repoList = null;
-
-            include_once $configLocation;
-
-            if (isset($zipsDirectory) == false) {
-                echo "zipsDirectory is not set, cannot proceed.";
-                exit(0);
-            }
-//            if (isset($accessToken) == false) {
-//                echo "accessToken is not set, cannot proceed.";
-//                exit(0);
-//            }
-
-            if (isset($repoList) == false) {
-                echo "repoList is not set, cannot proceed.";
-                exit(0);
-            }
-            
-            //TODO - check all values, not just a couple.
-
-            $isDryRun = false;
-            $config = new \Bastion\Config($zipsDirectory, $isDryRun, $accessToken, $repoList);
+            $config = include_once $configLocation;
 
             return $config;
         }
@@ -416,25 +403,6 @@ function getConfig() {
 //function getArtifacts($ignoreList, $usingList,  Config $config) {
 
 function getArtifacts(ArtifactFetcher $artifactFetcher, Reactor $reactor, $listOfRepositories) {
-
-    //$reactor = (new ReactorFactory)->select();
-    //$asyncClient = new DebugAsyncClient($reactor);
-//    $asyncClient->setOption('maxconnections', 3);
-//    $asyncClient->setOption('connecttimeout', 10);
-//    $asyncClient->setOption('transfertimeout', 10);
-
-    //$repoInfo = new \Bastion\FileStoredRepoInfo($ignoreList, $usingList);
-    //$githubAPI = new \GithubService\GithubArtaxService\GithubArtaxService($asyncClient, "Danack/Bastion");
-
-    //$downloader = new \Bastion\URLFetcher($asyncClient, $config->getAccessToken());
-
-//    $artifactFetcher = new ArtifactFetcher(
-//        $githubAPI,
-//        $downloader,
-//        $repoInfo,
-//        $config
-//    );
-
     $artifactFetcher->downloadZipArtifacts(
         $listOfRepositories
     );
@@ -443,20 +411,37 @@ function getArtifacts(ArtifactFetcher $artifactFetcher, Reactor $reactor, $listO
 }
 
 /**
+ * Satis generates the file paths with an absolute path so that the links are borked e.g.
+ * http://localhost:8000/documents/projects/github/Bastion/Bastion/zipsOutput/packages/zendframework_Component_ZendFilter_2.2.5.zip
+ * instead of 
+ * http://localhost:8000/packages/zendframework_Component_ZendFilter_2.2.5.zip
+ * 
+ * This function corrects the paths to allow the files to be deployed to a different server than where they were built, or be accessed by a different path e.g. symlink.
+ * 
+ * See https://github.com/composer/satis/issues/122 
  * @param $outputDirectory
  * @param $siteURL
  */
 function fixPaths($outputDirectory, $siteURL) {
-    $outputDirectory = $outputDirectory."/packages";
+
     $absolutePath = dirname(realpath($outputDirectory));
 
-    $src = $outputDirectory."./packages.json";
-    $text = file_get_contents($src);
+    $src = $outputDirectory."/packages.json";
+    $text = @file_get_contents($src);
+    
+    if ($text === false) {
+        throw new LogicException("Failed to open `packages.json` in directory ".$outputDirectory.". Presumably it wasn't built?");
+    }
+    
     $text = str_replace($absolutePath, $siteURL, $text);
     file_put_contents($src, $text);
 
     $src = $outputDirectory."/index.html";
     $text = file_get_contents($src);
+    if ($text === false) {
+        throw new LogicException("Failed to open `index.html` in directory ".$outputDirectory.". Presumably it wasn't built?");
+    }
+    
     $text = str_replace($absolutePath, "", $text);
     file_put_contents($src, $text);
 }
@@ -464,32 +449,13 @@ function fixPaths($outputDirectory, $siteURL) {
 /**
  * @param Uploader $uploader
  */
-function syncArtifactBuild(Uploader $uploader) {
-    $uploader->putFile("./zipsOutput/index.html", 'index.html');
-    $uploader->putFile("./zipsOutput/packages.json", 'packages.json');
-    $uploader->syncDirectory("./zipsOutput/packages/", "packages");
+function syncArtifactBuild(Config $config, Uploader $uploader) {
+    $outputDirectory = $config->getOutputDirectory();
+    $uploader->putFile($outputDirectory."/index.html", 'index.html');
+    $uploader->putFile($outputDirectory."/packages.json", 'packages.json');
+    $uploader->syncDirectory($outputDirectory."/packages/", "packages");
     $uploader->finishProcessing();
 }
-
-/**
- * @param $awsServicesKey
- * @param $awsServicesSecret
- * @param $allowedIPAddresses
- */
-function syncSatisBuild($awsServicesKey, $awsServicesSecret, $allowedIPAddresses) {
-    $sync = new S3Sync(
-        $awsServicesKey,
-        $awsServicesSecret,
-        "satis.basereality.com",
-        $allowedIPAddresses
-    );
-
-    $sync->putFile("./satisOutput/index.html", 'satis-public/index.html');
-    $sync->putFile("./satisOutput/packages.json", 'satis-public/packages.json');
-    $sync->syncDirectory("./satisOutput/packages/", "satis-public/packages");
-    $sync->updateACL(false);
-}
-
 
 
 /**
@@ -518,29 +484,80 @@ function toCurl(Artax\Request $request) {
 }
 
 
+function createS3Client(Config $config) {
+
+    if (strlen($config->getS3Key()) == 0) {
+        echo "S3Key is zero length - S3 upload unlikely to work.";
+    }
+    
+    if (strlen($config->getS3Secret()) == 0) {
+        echo "S3Secret is zero length - S3 upload unlikely to work.";
+    }
+
+    if (strlen($config->getS3Region()) == 0) {
+        echo "S3Region is zero length - S3 creating bucket is unlikely to work.";
+    }
+
+    $s3Client = S3Client::factory([
+        'key' => $config->getS3Key(),
+        'secret' => $config->getS3Secret(),
+        'region' => $config->getS3Region()
+    ]);
+
+    $s3Client->getConfig()->set('curl.options', array(CURLOPT_VERBOSE => true));
+
+    return $s3Client;
+}
+
+
 /**
  * @param Config $config
+ * @return \Auryn\Provider
  */
 function createInjector(Config $config) {
 
     $injector = new \Auryn\Provider();
 
+    $injector->share($config);
+    $injector->alias('GithubService\GithubService', 'GithubService\GithubArtaxService\GithubArtaxService');
+
+    $injector->define('Bastion\S3ACLRestrictByIPGenerator', [':allowedIPAddresses' => []]);
+    $injector->alias('Bastion\S3ACLGenerator', $config->getRestrictionClass());
+    
+    $injector->alias('Bastion\Uploader', 'Bastion\S3Sync');
+    
+    $injector->define(
+        'Bastion\FileStoredRepoInfo',
+        [
+            ':ignoreListFilename' => realpath(__DIR__)."/../ignoreList.txt",
+            ':usingListFilename' => realpath(__DIR__)."/../usingList.txt"
+        ]
+    );
+    $injector->share('Bastion\RepoInfo');
+    $injector->alias('Bastion\RepoInfo', 'Bastion\FileStoredRepoInfo');
+    
     $injector->share('Alert\Reactor');
     $injector->delegate(
         'Bastion\URLFetcher',
         function (\Artax\AsyncClient $asyncClient) use ($config) {
-            new \Bastion\URLFetcher($asyncClient, $config->getAccessToken());
+            return new \Bastion\URLFetcher($asyncClient, $config->getAccessToken());
         }
     );
 
+    $injector->delegate('Alert\Reactor', function() {
+            return (new ReactorFactory)->select();
+    });
+    
     $injector->delegate(
         'Artax\AsyncClient',
         function (Alert\Reactor $reactor) {
             $asyncClient = new DebugAsyncClient($reactor);
-            $asyncClient->setOption('maxconnections', 3);
-            $asyncClient->setOption('connecttimeout', 10);
-            $asyncClient->setOption('transfertimeout', 10);
+//            $asyncClient->setOption('maxconnections', 3);
+//            $asyncClient->setOption('connecttimeout', 10);
+//            $asyncClient->setOption('transfertimeout', 10);
 
+            setupObserver($asyncClient);
+            
             return $asyncClient;
         }
     );
@@ -548,32 +565,167 @@ function createInjector(Config $config) {
     $injector->delegate(
         'GithubService\GithubArtaxService\GithubArtaxService',
         function (\Artax\AsyncClient $asyncClient) use ($config) {
-            new \GithubService\GithubArtaxService\GithubArtaxService($asyncClient, "Danack/Bastion");
+            return new \GithubService\GithubArtaxService\GithubArtaxService($asyncClient, "Danack/Bastion");
         }
     );
 
-    $injector->delegate(
-        'Aws\S3\S3Client',
-        function () use ($config) {
-            $s3Client = S3Client::factory(
-                [
-                    'key' => $config->getS3Key(),
-                    'secret' => $config->getS3Secret(),
-                    'region' => $config->getRegion()
-                ]
-            );
-        }
-    );
-
-    $injector->alias('Bastion\S3ACLGenerator', $config->getRestrictionClass());
-
-    $injector->define(
-        'Bastion\FileStoredRepoInfo',
-        [':ignoreList' => realpath(__DIR__)."/../ignoreList.txt",
-         ':usingList' => realpath(__DIR__)."/../usingList.txt"
-        ]
-    );
-
+    $injector->delegate('Aws\S3\S3Client', 'createS3Client');
     $injector->define('Bastion\S3Sync', [':bucket' => $config->getBucketName()]);
 
+    return $injector;
+}
+
+
+
+// --- A function we'll call to update the console display ---------------------------------------->
+
+function updateDisplay(array $displayLines) {
+    print chr(27) . "[2J" . chr(27) . "[;H"; // clear screen
+    echo '------------------------------------', PHP_EOL;
+    echo 'Artax parallel request progress demo', PHP_EOL;
+    echo '------------------------------------', PHP_EOL, PHP_EOL;
+
+    echo implode($displayLines, PHP_EOL), PHP_EOL;
+}
+
+
+function setupObserver(AsyncClient $client) {
+    $lastUpdate = microtime(TRUE);
+    $displayLines = [];
+    $requestNameMap = new SplObjectStorage;
+    
+    $client->addObservation([
+        AsyncClient::REQUEST => function($dataArr) use (&$requestNameMap) {
+            $request = $dataArr[0];
+            // Use HTTP/1.0 to prevent chunked encoding and hopefully receive a Content-Length header.
+            // Since we're using 1.0 we want to explicitly ask for keep-alives to avoid closing the
+            // connection after each request.
+            $request->setProtocol('1.0')->setHeader('Connection', 'keep-alive');
+            
+            $requestKey = $request->getUri();
+            
+            str_replace('https://api.github.com/repos/Danack', '', $requestKey);
+            
+            $requestNameMap->attach($request, $requestKey);
+            $displayLines[$requestKey] = str_pad($requestKey, 20) . 'Awaiting connection ...';
+        }
+    ]);
+    
+    
+    $ext = new ProgressExtension;
+    $ext->extend($client);
+    $ext->setProgressBarSize(30);
+    $ext->addObservation([
+        ProgressExtension::PROGRESS => function($dataArr) use (&$displayLines, &$lastUpdate, &$requestNameMap) {
+            $now = microtime(TRUE);
+            if (($now - $lastUpdate) > 0.05) { // Limit updates to 20fps to avoid a choppy display
+                list($request, $progress) = $dataArr;
+                
+                /** @var $request \Artax\Request */
+                if ($requestNameMap->offsetExists($request) == true) {
+                    $requestKey = $requestNameMap->offsetGet($request);
+                }
+                else {
+                    $requestKey = $request->getUri();
+                    $requestNameMap->attach($request, $requestKey);
+                    $displayLines[$requestKey] = str_pad($requestKey, 20) . 'Awaiting connection ...';
+                }
+
+                $displayLines[$requestKey] = str_pad($requestKey, 15) . ProgressDisplay::display($progress);
+                $lastUpdate = $now;
+                updateDisplay($displayLines);
+            }
+        },
+
+        ProgressExtension::RESPONSE => function($dataArr) use (&$displayLines, &$lastUpdate, &$requestNameMap) {
+
+            list($request, $progress) = $dataArr;
+            /** @var $request \Artax\Request */
+            if ($requestNameMap->offsetExists($request) == true) {
+                $requestKey = $requestNameMap->offsetGet($request);
+            }
+            else {
+                $requestKey = $request->getUri();
+                $requestNameMap->attach($request, $requestKey);
+                $displayLines[$requestKey] = str_pad($requestKey, 20) . 'Awaiting connection ...';
+            }
+
+            unset($displayLines[$requestKey]);
+        }
+    ]);
+}
+
+
+function processRemoveList() {
+    echo "processRemoveList not implemented yet.";
+    return;
+    $lines = @file($removeListName);
+    
+    if ($lines === false) {
+        throw new BastionException("Could not open remove list with file name $removeListName");
+    }
+
+    $zipDirectoryRealPath = realpath($this->config->getZipsDirectory());
+
+    foreach ($lines as $line) {
+        $repoTagName = trim($line);
+        if (strlen($repoTagName) == 0) {
+            continue;
+        }
+
+        $zipFilename = $this->getZipFilename($repoTagName);
+        echo "Delete package $repoTagName which has zipfilename ".$zipFilename."\n";
+
+        $fileToRemoveRealPath = realpath(dirname($zipFilename));
+
+        if (strpos($fileToRemoveRealPath, $zipDirectoryRealPath) !== 0) {
+            printf(
+                "Skipping removing %s it is outside of the current zipsDirectory %s".PHP_EOL,
+                $repoTagName,
+                $this->config->getZipsDirectory()
+            );
+            continue;
+        }
+
+        //remove the line from using list
+        //Delete the archive
+        $this->repoInfo->addRepoTagToIgnoreList($repoTagName);
+    }
+}
+
+/**
+ * //TODO - shift this to in memory?
+ * @param Config $config
+ */
+function writeSatisJsonFile($filename, Config $config) {
+
+    $path = $config->getOutputDirectory();
+    
+    $absolutePath = realpath($path).'/packages/';
+
+    $text = <<< END
+
+{
+    "name": "Bastion package repository",
+    "description": "This file is auto-generated to allow Satis to run.",
+    "homepage": "http://satis.basereality.com/zipsOutput",
+    "repositories": [
+        {
+            "packagist": false
+        },
+        {
+            "type": "artifact",
+            "url": "$absolutePath"
+        }
+    ],
+    "require-all": true
+}
+    
+END;
+
+    $written = @file_put_contents($filename, $text);
+
+    if ($written === false) {
+        throw new LogicException("Failed to write $filename");
+    }
 }

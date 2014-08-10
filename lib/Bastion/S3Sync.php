@@ -19,14 +19,10 @@ class S3Sync implements Uploader {
 
     private $bucket;
 
-    /**
-     * @var S3ACLGenerator
-     */
-    private $conditionGenerator;
 
-    function __construct($bucket, S3ACLGenerator $conditionGenerator, S3Client $s3Client) {
+    function __construct($bucket, S3ACLGenerator $s3ACLGenerator, S3Client $s3Client) {
         $this->bucket = $bucket;
-        $this->conditionGenerator = $conditionGenerator;
+        $this->s3ACLGenerator = $s3ACLGenerator;
         $this->s3Client = $s3Client;
     }
 
@@ -108,7 +104,7 @@ class S3Sync implements Uploader {
      * @param $restrictByIP
      */
     function finishProcessing() {
-        $allowCondition = $this->s3ACLGenerator->generateConditonBlock();
+        $allowCondition = $this->s3ACLGenerator->generateConditionBlock();
         $policy = '{
             "Id": "Policy1392421300612",
             "Statement": [

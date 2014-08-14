@@ -219,22 +219,20 @@
         },
         {
             "name": "danack/artaxservicebuilder",
-            "version": "0.1.1",
+            "version": "0.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Danack/ArtaxServiceBuilder.git",
-                "reference": "3aeea6e53a7d31015e6e63bdf46a0369610ef1bf"
+                "reference": "dacfbe86d5a3bc721413c04a375421431008e4d0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Danack/ArtaxServiceBuilder/zipball/3aeea6e53a7d31015e6e63bdf46a0369610ef1bf",
-                "reference": "3aeea6e53a7d31015e6e63bdf46a0369610ef1bf",
+                "url": "https://api.github.com/repos/Danack/ArtaxServiceBuilder/zipball/dacfbe86d5a3bc721413c04a375421431008e4d0",
+                "reference": "dacfbe86d5a3bc721413c04a375421431008e4d0",
                 "shasum": ""
             },
             "require": {
-                "danack/danack-code": ">=2.4.4",
-                "danack/danackhttp2": ">=1.2.0",
-                "rdlowrey/artax": "~0.7.1"
+                "danack/danack-code": ">=2.4.4"
             },
             "require-dev": {
                 "danack/auryn": "~0.9.5",
@@ -249,10 +247,10 @@
                 }
             },
             "support": {
-                "source": "https://github.com/Danack/ArtaxServiceBuilder/tree/0.1.1",
+                "source": "https://github.com/Danack/ArtaxServiceBuilder/tree/0.1.2",
                 "issues": "https://github.com/Danack/ArtaxServiceBuilder/issues"
             },
-            "time": "2014-08-04 10:56:22"
+            "time": "2014-08-06 11:35:00"
         },
         {
             "name": "danack/danack-code",
@@ -290,49 +288,6 @@
                 "issues": "https://github.com/Danack/DanackCode/issues"
             },
             "time": "2014-07-27 14:31:53"
-        },
-        {
-            "name": "danack/danackhttp2",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Danack/http2.git",
-                "reference": "616eadd3acc058eb56e7a1076a94d74d2484024e"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Danack/http2/zipball/616eadd3acc058eb56e7a1076a94d74d2484024e",
-                "reference": "616eadd3acc058eb56e7a1076a94d74d2484024e",
-                "shasum": ""
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~4.0.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "HTTP2": "src/"
-                }
-            },
-            "include-path": [
-                "./"
-            ],
-            "license": [
-                "New BSD License"
-            ],
-            "authors": [
-                {
-                    "email": "Danack@basereality.com",
-                    "name": "Dan Ackroyd",
-                    "role": "Developer"
-                }
-            ],
-            "description": "A fork of HTTP for PHP5 and autoloading",
-            "support": {
-                "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=HTTP2",
-                "source": "https://github.com/Danack/HTTP2"
-            },
-            "time": "2014-07-13 21:04:06"
         },
         {
             "name": "danack/githubartaxservice",
@@ -647,12 +602,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/rdlowrey/acesync.git",
-                "reference": "ad14fc6515d0051c8e9ccdfde408cda957def786"
+                "reference": "2283ab53b5af78e6aad48cf46ce9d9847ae37d51"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rdlowrey/acesync/zipball/ad14fc6515d0051c8e9ccdfde408cda957def786",
-                "reference": "ad14fc6515d0051c8e9ccdfde408cda957def786",
+                "url": "https://api.github.com/repos/rdlowrey/acesync/zipball/2283ab53b5af78e6aad48cf46ce9d9847ae37d51",
+                "reference": "2283ab53b5af78e6aad48cf46ce9d9847ae37d51",
                 "shasum": ""
             },
             "require": {
@@ -692,10 +647,10 @@
                 "tls"
             ],
             "support": {
-                "source": "https://github.com/rdlowrey/acesync/tree/v0.2.2",
+                "source": "https://github.com/rdlowrey/acesync/tree/v0.2.4",
                 "issues": "https://github.com/rdlowrey/acesync/issues"
             },
-            "time": "2014-08-05 21:58:45"
+            "time": "2014-08-11 21:35:43"
         },
         {
             "name": "rdlowrey/after",
@@ -853,12 +808,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/rdlowrey/auryn.git",
-                "reference": "86701db6afd8849d3342b73c4dcdb53ade552ba6"
+                "reference": "4a30ef91f159d81b6cf1f130fc4db12c8f185040"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rdlowrey/auryn/zipball/86701db6afd8849d3342b73c4dcdb53ade552ba6",
-                "reference": "86701db6afd8849d3342b73c4dcdb53ade552ba6",
+                "url": "https://api.github.com/repos/rdlowrey/auryn/zipball/4a30ef91f159d81b6cf1f130fc4db12c8f185040",
+                "reference": "4a30ef91f159d81b6cf1f130fc4db12c8f185040",
                 "shasum": ""
             },
             "require": {
@@ -903,10 +858,10 @@
                 "ioc"
             ],
             "support": {
-                "source": "https://github.com/rdlowrey/auryn/tree/master",
+                "source": "https://github.com/rdlowrey/auryn/tree/v0.14.0",
                 "issues": "https://github.com/rdlowrey/auryn/issues"
             },
-            "time": "2014-08-01 15:40:52"
+            "time": "2014-08-11 13:28:33"
         },
         {
             "name": "seld/jsonlint",

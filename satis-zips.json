@@ -9,7 +9,7 @@
         },
         {
             "type": "artifact",
-            "url": "/documents/projects/github/Bastion/Bastion/zipsOutput/packages/"
+            "url": "/home/github/Bastion/Bastion/zipsOutput/packages/"
         }
     ],
     "require-all": true

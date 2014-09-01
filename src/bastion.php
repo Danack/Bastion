@@ -24,9 +24,8 @@ if (count($config->getRepoList()) == 0) {
     exit(0);
 }
 
-//Step 0 - 
+//Step 0 - bootstrap.
 $injector = createInjector($config);
-
 $artifactFetcher = $injector->make('Bastion\ArtifactFetcher');
 
 //$artifactFetcher->processRemoveList($config->getZipsDirectory()."/removeList.txt");
@@ -34,15 +33,19 @@ $artifactFetcher = $injector->make('Bastion\ArtifactFetcher');
 $filename = realpath(dirname(__FILE__).'/../');
 $filename .= '/satis-zips.json';
 
-writeSatisJsonFile($filename, $config);
 
 
 //Step 1 - download everything
 $injector->execute('getArtifacts',[':listOfRepositories' => $config->getRepoList()]);
 
 
+writeSatisJsonFile($filename, $config);
 //Step 2 - Run satis to build the site files and description of the packages.
+echo "Finished downloading, running Satis".PHP_EOL;
 $absolutePath = dirname(realpath($config->getOutputDirectory()));
+
+$application = new Application();
+$appDefinition = $application->getDefinition();
 
 //Create the command
 $input = new ArrayInput([
@@ -50,8 +53,11 @@ $input = new ArrayInput([
     'file' => $filename,
     'output-dir' => $absolutePath.'/zipsOutput'
 ]);
+
+
+
+
 //Create the application and run it with the commands
-$application = new Application();
 $application->run($input);
 
 //Step 3 - fix the broken paths
@@ -59,18 +65,3 @@ fixPaths($config->getOutputDirectory(), $config->getSiteName());
 
 //Step 4 upload all the things
 $injector->execute('syncArtifactBuild');
-
-
-
-/*
-
-    / * *
-     * @param $removeListName
-     * @throws BastionException
-     * /
-public function processRemoveList($removeListName) {
-
-}
-
-
-*/

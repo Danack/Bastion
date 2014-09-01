@@ -105,6 +105,7 @@ class S3Sync implements Uploader {
      */
     function finishProcessing() {
         $allowCondition = $this->s3ACLGenerator->generateConditionBlock();
+        //@TODO - aren't those numbers meant to be unique?
         $policy = '{
             "Id": "Policy1392421300612",
             "Statement": [
@@ -114,7 +115,7 @@ class S3Sync implements Uploader {
                         "s3:GetObject"
                     ],
                     "Effect": "Allow",
-                    "Resource": "arn:aws:s3:::satis.basereality.com/*",
+                    "Resource": "arn:aws:s3:::'.$this->bucket.'/*",
                     '.$allowCondition.'
                     "Principal": {
                         "AWS": [

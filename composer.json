@@ -118,11 +118,10 @@
         "aws/aws-sdk-php": "2.5.*",
         "composer/composer": "dev-master as 1.0.0",
         "composer/satis": "dev-master",
-        "danack/githubartaxservice": "~0.1.2",
+        "danack/githubartaxservice": "~0.2.1",
         "danack/danack-code": ">=2.4.4",
         "maximebf/consolekit": "1.0.3",
         "rdlowrey/auryn": ">=0.13.0",
-        "rdlowrey/artax": "dev-dev as 0.7.2",
         "bagder/ca-bundle": "dev-master"
 
     },

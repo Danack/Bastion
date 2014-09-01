@@ -3,18 +3,17 @@
 
 namespace Bastion;
 
-use Artax\Request;
 
 class URLFetcher {
     
     private $accessToken;
 
     /**
-     * @var \Artax\AsyncClient
+     * @var \Artax\Client
      */
     private $client;
     
-    function __construct(\Artax\AsyncClient $client, $accessToken) {
+    function __construct(\Artax\Client $client, $accessToken) {
         $this->accessToken = $accessToken;
         $this->client = $client;
     }
@@ -31,16 +30,8 @@ class URLFetcher {
             $request->setHeader("Authorization", "token ".$this->accessToken);
         }
 
-        // What to do if a request encounters an exceptional error
-        $onError = function(\Exception $e, Request $request)  {
-            printf(
-                "URLFetcher %s failed (", get_class($e), ") : %s\n",
-                $request->getUri(),
-                $e->getMessage()
-            );
-        };
-
-        $this->client->request($request, $responseCallback, $onError);
+        $promise = $this->client->request($request);
+        $promise->when($responseCallback);
     }
 }
 

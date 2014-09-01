@@ -1,9 +1,7 @@
 <?php
 
-use Bastion\S3Sync;
 use Aws\S3\S3Client;
 use Bastion\ArtifactFetcher;
-//use Artax\AsyncClient;
 use Artax\Client as ArtaxClient;
 use Alert\Reactor;
 use Alert\ReactorFactory;
@@ -13,8 +11,11 @@ use Bastion\Uploader;
 use ConsoleKit\Widgets\Dialog;
 use Bastion\BastionException;
 
-use Artax\Ext\Progress\ProgressExtension;
-use Artax\Ext\Progress\ProgressDisplay;
+use Artax\Cookie\CookieJar;
+use Artax\HttpSocketPool;
+use Acesync\Encryptor;
+use Artax\WriterFactory;
+
 
 require_once(realpath(__DIR__).'/../vendor/autoload.php');
 
@@ -24,24 +25,54 @@ define('CONFIG_FILE_NAME', 'bastionConfig.php');
 /**
  * Class DebugAsyncClient
  */
-class DebugAsyncClient extends ArtaxClient {
+class DebugClient extends ArtaxClient {
 
-    function request($uriOrRequest, callable $onResponse, callable $onError) {
-        echo "Making request: ";
+    private $progressDisplay;
+    
+    public function __construct(
+        \Bastion\Progress $progressDisplay,
+        Reactor $reactor = null,
+        CookieJar $cookieJar = null,
+        HttpSocketPool $socketPool = null,
+        Encryptor $encryptor = null,
+        WriterFactory $writerFactory = null) {
+        parent::__construct($reactor, $cookieJar, $socketPool, $encryptor, $writerFactory);
+        
+        $this->progressDisplay = $progressDisplay;
+    }
+    
+    /**
+     * @param $uriOrRequest
+     * @param array $options
+     * @return \After\Promise
+     */
+    public function request($uriOrRequest, array $options = []) {
+
+        $displayText = "Making request: ";
+
         if (is_string($uriOrRequest)) {
-            echo "string: ". $uriOrRequest;
+            $displayText .= "string: ". $uriOrRequest;
         }
         else if ($uriOrRequest instanceof \Artax\Request) {
-            echo "Request uri: ".$uriOrRequest->getUri();
+            $displayText .= "Request uri: ".$uriOrRequest->getUri();
             //echo "\n".toCurl($uriOrRequest);
         }
         else {
-            echo "class ".get_class($uriOrRequest);
+            $displayText .= "class ".get_class($uriOrRequest);
         }
-        echo "\n";
+        
+        $this->progressDisplay->displayStatus($displayText, 1);
 
-        return parent::request($uriOrRequest, $onResponse, $onError);
+        $watchCallback = $this->progressDisplay->getWatcher($uriOrRequest);
+        $promise = parent::request($uriOrRequest);
+        $progress = new \Artax\Progress($watchCallback);
+        $promise->watch($progress);
+        
+        return $promise;
     }
+    
+
+    
 }
 
 
@@ -539,33 +570,38 @@ function createInjector(Config $config) {
     $injector->share('Alert\Reactor');
     $injector->delegate(
         'Bastion\URLFetcher',
-        function (\Artax\AsyncClient $asyncClient) use ($config) {
-            return new \Bastion\URLFetcher($asyncClient, $config->getAccessToken());
+        function (\Artax\Client $client) use ($config) {
+            return new \Bastion\URLFetcher($client, $config->getAccessToken());
         }
     );
 
+    $injector->share('Bastion\Progress');
+    
+    
     $injector->delegate('Alert\Reactor', function() {
             return (new ReactorFactory)->select();
     });
     
     $injector->delegate(
-        'Artax\AsyncClient',
-        function (Alert\Reactor $reactor) {
-            $asyncClient = new DebugAsyncClient($reactor);
+        'Artax\Client',
+        function (Alert\Reactor $reactor, \Bastion\Progress $progress) {
+            $client = new DebugClient($progress, $reactor);
+            $client->setOption(ArtaxClient::OP_MS_KEEP_ALIVE_TIMEOUT, 3);
+
+            $client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 4);
+            
 //            $asyncClient->setOption('maxconnections', 3);
 //            $asyncClient->setOption('connecttimeout', 10);
 //            $asyncClient->setOption('transfertimeout', 10);
 
-            setupObserver($asyncClient);
-            
-            return $asyncClient;
+            return $client;
         }
     );
 
     $injector->delegate(
         'GithubService\GithubArtaxService\GithubArtaxService',
-        function (\Artax\AsyncClient $asyncClient) use ($config) {
-            return new \GithubService\GithubArtaxService\GithubArtaxService($asyncClient, "Danack/Bastion");
+        function (\Artax\Client $client) use ($config) {
+            return new \GithubService\GithubArtaxService\GithubArtaxService($client, "Danack/Bastion");
         }
     );
 
@@ -575,85 +611,6 @@ function createInjector(Config $config) {
     return $injector;
 }
 
-
-
-// --- A function we'll call to update the console display ---------------------------------------->
-
-function updateDisplay(array $displayLines) {
-    print chr(27) . "[2J" . chr(27) . "[;H"; // clear screen
-    echo '------------------------------------', PHP_EOL;
-    echo 'Artax parallel request progress demo', PHP_EOL;
-    echo '------------------------------------', PHP_EOL, PHP_EOL;
-
-    echo implode($displayLines, PHP_EOL), PHP_EOL;
-}
-
-
-function setupObserver(AsyncClient $client) {
-    $lastUpdate = microtime(TRUE);
-    $displayLines = [];
-    $requestNameMap = new SplObjectStorage;
-    
-    $client->addObservation([
-        AsyncClient::REQUEST => function($dataArr) use (&$requestNameMap) {
-            $request = $dataArr[0];
-            // Use HTTP/1.0 to prevent chunked encoding and hopefully receive a Content-Length header.
-            // Since we're using 1.0 we want to explicitly ask for keep-alives to avoid closing the
-            // connection after each request.
-            $request->setProtocol('1.0')->setHeader('Connection', 'keep-alive');
-            
-            $requestKey = $request->getUri();
-            
-            str_replace('https://api.github.com/repos/Danack', '', $requestKey);
-            
-            $requestNameMap->attach($request, $requestKey);
-            $displayLines[$requestKey] = str_pad($requestKey, 20) . 'Awaiting connection ...';
-        }
-    ]);
-    
-    
-    $ext = new ProgressExtension;
-    $ext->extend($client);
-    $ext->setProgressBarSize(30);
-    $ext->addObservation([
-        ProgressExtension::PROGRESS => function($dataArr) use (&$displayLines, &$lastUpdate, &$requestNameMap) {
-            $now = microtime(TRUE);
-            if (($now - $lastUpdate) > 0.05) { // Limit updates to 20fps to avoid a choppy display
-                list($request, $progress) = $dataArr;
-                
-                /** @var $request \Artax\Request */
-                if ($requestNameMap->offsetExists($request) == true) {
-                    $requestKey = $requestNameMap->offsetGet($request);
-                }
-                else {
-                    $requestKey = $request->getUri();
-                    $requestNameMap->attach($request, $requestKey);
-                    $displayLines[$requestKey] = str_pad($requestKey, 20) . 'Awaiting connection ...';
-                }
-
-                $displayLines[$requestKey] = str_pad($requestKey, 15) . ProgressDisplay::display($progress);
-                $lastUpdate = $now;
-                updateDisplay($displayLines);
-            }
-        },
-
-        ProgressExtension::RESPONSE => function($dataArr) use (&$displayLines, &$lastUpdate, &$requestNameMap) {
-
-            list($request, $progress) = $dataArr;
-            /** @var $request \Artax\Request */
-            if ($requestNameMap->offsetExists($request) == true) {
-                $requestKey = $requestNameMap->offsetGet($request);
-            }
-            else {
-                $requestKey = $request->getUri();
-                $requestNameMap->attach($request, $requestKey);
-                $displayLines[$requestKey] = str_pad($requestKey, 20) . 'Awaiting connection ...';
-            }
-
-            unset($displayLines[$requestKey]);
-        }
-    ]);
-}
 
 
 function processRemoveList() {

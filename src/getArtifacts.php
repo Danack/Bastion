@@ -3,7 +3,7 @@
 use Bastion\ArtifactFetcher;
 
 
-use Artax\AsyncClient;
+use Artax\Client;
 use Alert\ReactorFactory;
 
 $accessToken = false;

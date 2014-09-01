@@ -5,6 +5,15 @@ namespace Bastion;
 use Composer\Package\Version\VersionParser;
 use GithubService\GithubService;
 
+function subFirstDigit($text) {
+    preg_match('/^\D*(?=\d)/', $text, $matches, PREG_OFFSET_CAPTURE);
+
+    if (isset($matches[0])) {
+        return substr($text, strlen($matches[0][0]));
+    }
+
+    return $text;
+}
 
 class ArtifactFetcher {
 
@@ -28,16 +37,25 @@ class ArtifactFetcher {
      */
     private $config;
 
+    /**
+     * @var Progress
+     */
+    private $progress;
+    
+    
     function __construct(
         GithubService $githubAPI,
         \Bastion\URLFetcher $fileFetcher,
         \Bastion\RepoInfo $repoInfo,
-        Config $config
+        Config $config,
+        \Bastion\Progress $progress
+        
     ) {
         $this->githubAPI = $githubAPI;
         $this->repoInfo = $repoInfo;
         $this->urlFetcher = $fileFetcher;
         $this->config = $config;
+        $this->progress = $progress;
     }
 
     /**
@@ -50,10 +68,13 @@ class ArtifactFetcher {
         return $zipFilename;
     }
 
-
+    function abort() {
+        //Quitting is hard.
+        exit(0);
+    }
 
     function abortProcess($errorMessage) {
-        echo $errorMessage.PHP_EOL;
+        $this->progress->displayStatus($errorMessage);
     }
 
     /**
@@ -78,12 +99,20 @@ class ArtifactFetcher {
 
         $owner = substr($repo, 0, $firstSlashPosition);
         $reponame = substr($repo, $firstSlashPosition + 1);
-        $callback = function(\GithubService\Model\RepoTags $repoTags) use($owner, $reponame) {
+        $callback = function(\Exception $error = null, \GithubService\Model\RepoTags $repoTags = null) use($owner, $reponame) {
+            
+            if ($error) {
+                $this->progress->displayStatus("Error in addRepoToProcess callback: ".$error->getMessage(), 5);
+                
+                $this->abort();
+                return;
+            }
+            
             $this->processRepoTags($owner, $reponame, $repoTags);
         };
 
         $command = $this->githubAPI->listRepoTags($this->config->getAccessToken(), $owner, $reponame);
-        $this->githubAPI->executeAsync($command, $callback);
+        $command->executeAsync($callback);
     }
 
     /**
@@ -92,7 +121,7 @@ class ArtifactFetcher {
      * @param \GithubService\Model\RepoTags $repoTags
      */
     function processRepoTags($owner, $repo, \GithubService\Model\RepoTags $repoTags) {
-        echo "process repo tags owner $owner, repo $repo!\n";
+        $this->progress->displayStatus("process repo tags owner $owner, repo $repo!");
         foreach ($repoTags->getIterator() as $repoTag) {
             //if ($this->repoInfo->isInIgnoreList()
             $this->getRepoArtifact($owner, $repo, $repoTag);
@@ -132,18 +161,28 @@ class ArtifactFetcher {
         if ($this->config->isDryRun() == true) {
             return;
         }
-        list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
-        echo "getRepoArtifact: $repoTagName ".PHP_EOL;
-        if (file_exists($zipFilename) == false) {
-            $responseCallback = function (\Artax\Response $response) use ($owner, $repo, $repoTag) {
-                $this->processDownloadedFileResponse($response, $owner, $repo, $repoTag);
-            };
 
-            echo "Starting download".PHP_EOL;
+        $responseCallback = function(\Exception $error = null, \Artax\Response $response = null) use ($owner, $repo, $repoTag) {
+
+            if ($error) {
+                $outputString = "Error in getRepoArtifact ".$error->getMessage();
+                $this->progress->displayStatus($outputString);
+                return;
+            }
+
+            $this->processDownloadedFileResponse($response, $owner, $repo, $repoTag);
+        };
+
+        list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
+        $outputString = "getRepoArtifact: $repoTagName ";
+        if (file_exists($zipFilename) == false) {
+            $outputString .= "Starting download";
+            //$this->progress->displayStatus($outputString);
             $this->urlFetcher->downloadFile($repoTag->zipballURL, $responseCallback);
         }
         else {
-            echo "$zipFilename already exists.".PHP_EOL;
+            //$outputString .= "$zipFilename already exists.";
+            //$this->progress->displayStatus($outputString);
         }
     }
     
@@ -275,13 +314,25 @@ class ArtifactFetcher {
      * @throws \Bastion\InvalidComposerFileException If the version entry is already set, but was not parsible by VersionParser
      */
     function ensureValidVersionIsSet($contentsInfo, $version) {
+
+        $versionParser = new VersionParser();
+
+        $version = subFirstDigit($version);
+        
+        
         if (array_key_exists('version', $contentsInfo) == false) {
-            echo "Adding version tag $version.\n";
+            //echo "Adding version tag $version.\n";
+            try {
+                $versionParser->normalize($version);
+            }
+            catch(\UnexpectedValueException $uve) {
+                throw new InvalidComposerFileException("Version ".$version." isn't a usable version name.");
+            }
+            
             $contentsInfo['version'] = $version;
             return $contentsInfo;
         }
 
-        $versionParser = new VersionParser();
 
         try {
             $versionParser->normalize($contentsInfo['version']);

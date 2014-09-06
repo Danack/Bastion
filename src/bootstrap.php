@@ -455,26 +455,29 @@ function getArtifacts(ArtifactFetcher $artifactFetcher, Reactor $reactor, $listO
  */
 function fixPaths($outputDirectory, $siteURL) {
 
-    $absolutePath = dirname(realpath($outputDirectory));
+    $absolutePath = realpath($outputDirectory);
 
-    $src = $outputDirectory."/packages.json";
-    $text = @file_get_contents($src);
+    fixPathsInFile($outputDirectory."/packages.json", $absolutePath, $siteURL);
+    fixPathsInFile($outputDirectory."/index.html", $absolutePath, $siteURL);
+
+    $includeFiles = glob($outputDirectory.'/include/*.json');
     
-    if ($text === false) {
-        throw new LogicException("Failed to open `packages.json` in directory ".$outputDirectory.". Presumably it wasn't built?");
+    foreach($includeFiles as $includeFile) {
+        fixPathsInFile($includeFile, $absolutePath, $siteURL);
     }
-    
+}
+
+
+function fixPathsInFile($filename, $absolutePath, $siteURL) {
+    $text = @file_get_contents($filename);
+
+    if ($text === false) {
+        throw new LogicException("Failed to open file $filename. Presumably it wasn't built?"
+        );
+    }
+
     $text = str_replace($absolutePath, $siteURL, $text);
-    file_put_contents($src, $text);
-
-    $src = $outputDirectory."/index.html";
-    $text = file_get_contents($src);
-    if ($text === false) {
-        throw new LogicException("Failed to open `index.html` in directory ".$outputDirectory.". Presumably it wasn't built?");
-    }
-    
-    $text = str_replace($absolutePath, "", $text);
-    file_put_contents($src, $text);
+    file_put_contents($filename, $text);
 }
 
 /**
@@ -482,10 +485,13 @@ function fixPaths($outputDirectory, $siteURL) {
  */
 function syncArtifactBuild(Config $config, Uploader $uploader) {
     $outputDirectory = $config->getOutputDirectory();
+    $uploader->putFile($outputDirectory."/404.html", '404.html');
     $uploader->putFile($outputDirectory."/index.html", 'index.html');
     $uploader->putFile($outputDirectory."/packages.json", 'packages.json');
+    $uploader->syncDirectory($outputDirectory."/include/", "include");
     $uploader->syncDirectory($outputDirectory."/packages/", "packages");
     $uploader->finishProcessing();
+    echo "Upload complete.\n";
 }
 
 
@@ -581,18 +587,23 @@ function createInjector(Config $config) {
     $injector->delegate('Alert\Reactor', function() {
             return (new ReactorFactory)->select();
     });
-    
-    $injector->delegate(
-        'Artax\Client',
-        function (Alert\Reactor $reactor, \Bastion\Progress $progress) {
-            $client = new DebugClient($progress, $reactor);
-            $client->setOption(ArtaxClient::OP_MS_KEEP_ALIVE_TIMEOUT, 3);
 
-            $client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 4);
-            
+
 //            $asyncClient->setOption('maxconnections', 3);
 //            $asyncClient->setOption('connecttimeout', 10);
 //            $asyncClient->setOption('transfertimeout', 10);
+
+
+    $injector->share('Artax\Client');
+    $injector->delegate(
+        'Artax\Client',
+        function (Alert\Reactor $reactor, \Bastion\Progress $progress) {
+
+            //This extends the client, to be able to put a watch on each of the
+            //Promises that Artax returns
+            $client = new DebugClient($progress, $reactor); 
+            $client->setOption(ArtaxClient::OP_MS_KEEP_ALIVE_TIMEOUT, 3);
+            $client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 4);
 
             return $client;
         }

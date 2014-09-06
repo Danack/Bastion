@@ -123,7 +123,12 @@ class ArtifactFetcher {
     function processRepoTags($owner, $repo, \GithubService\Model\RepoTags $repoTags) {
         $this->progress->displayStatus("process repo tags owner $owner, repo $repo!");
         foreach ($repoTags->getIterator() as $repoTag) {
-            //if ($this->repoInfo->isInIgnoreList()
+            //Check that this is the same as what is being written to ignore list file
+
+            list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
+            if ($this->repoInfo->isInIgnoreList($repoTagName) == true) {
+                continue;
+            }
             $this->getRepoArtifact($owner, $repo, $repoTag);
         }
     }

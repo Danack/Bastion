@@ -11,21 +11,23 @@ class SpecBuilder {
 
     private $filesMacro = '';
     private $buildScript = '';
-
     private $installDir;
-    private $installDirDest;
 
     function __construct(RPMBuildConfig $buildConfig, RPMProjectConfig $projectConfig) {
-        $this->buildConfig = $buildConfig;
-        $this->projectConfig = $projectConfig;
+        $buildConfig->checkData();
+        $projectConfig->checkData();
+        //cloning prevents mutability
+        $this->buildConfig = clone $buildConfig;
+        $this->projectConfig = clone $projectConfig;
+        $this->installDir = $projectConfig->getInstallDir();
 
-        $this->installDir = "/home/intahwebz/intahwebz-1.2.3/";
-        $this->installDirDest = "\$RPM_BUILD_ROOT/home/intahwebz/intahwebz-1.2.3/";
-
-        $this->filesMacro = "%files
-%defattr(555,intahwebz,www-data)\n";
+        $this->filesMacro = sprintf(
+            "%%files
+%%defattr(555,%s,%s)\n",
+            $projectConfig->getUnixUser(),
+            $projectConfig->getUnixGroup()
+        );
     }
-
 
     private function addInstallFiles() {
         foreach ($this->buildConfig->getRPMInstallFiles() as $file) {
@@ -34,12 +36,22 @@ class SpecBuilder {
             $dirname = dirname($dest);
             $this->buildScript .= "mkdir -p \$RPM_BUILD_ROOT/$dirname\n";
             $this->buildScript .= "cp \$RPM_BUILD_DIR/$src \$RPM_BUILD_ROOT/$dest \n";
-            //todo - adjut attr
+            //todo - adjust attr
             $this->filesMacro .= "$dest\n";
         }
     }
 
 
+    private function addPostBuildScripts() {
+        foreach ($this->buildConfig->getScripts() as $script) {
+            $this->buildScript .=  $script."\n";
+        }
+    }
+
+
+    /**
+     * 
+     */
     private function processCrontab() {
         $crontabFiles = $this->buildConfig->getCrontabFiles();
         if (count($crontabFiles)) {
@@ -53,6 +65,9 @@ class SpecBuilder {
         }
     }
 
+    /**
+     * 
+     */
     function addDataDirectories() {
         foreach ($this->buildConfig->getRPMDataDirectories() as $rpmDataDirectory) {
             $modeString = "-";
@@ -63,7 +78,7 @@ class SpecBuilder {
 
             $this->buildScript .= sprintf(
                 "mkdir -p \$RPM_BUILD_ROOT/%s/%s \n",
-                $this->installDir,
+                $this->projectConfig->getInstallDir(),
                 $rpmDataDirectory->getDirectory()
             );
 
@@ -72,52 +87,61 @@ class SpecBuilder {
                 $modeString,
                 $rpmDataDirectory->getUser(),
                 $rpmDataDirectory->getGroup(),
-                $this->installDir,
+                $this->projectConfig->getInstallDir(),
                 $rpmDataDirectory->getDirectory()
             );
         }
     }
 
+    /**
+     * 
+     */
     function addSourceDirectories() {
         foreach ($this->buildConfig->getSourceDirectories() as $srcDirectory) {
             $this->filesMacro .= sprintf(
                 "%s/%s/*\n",
-                $this->installDir,
+                $this->projectConfig->getInstallDir(),
                 $srcDirectory
             );
 
             $this->buildScript .= sprintf(
                 "mkdir -p \$RPM_BUILD_ROOT/%s/%s \n",
-                $this->installDir,
+                $this->projectConfig->getInstallDir(),
                 $srcDirectory
             );
 
             $this->buildScript .= sprintf(
                 "cp -R \$RPM_BUILD_DIR/%s/* \$RPM_BUILD_ROOT/%s/%s/ \n",
-                $srcDirectory, 
-                $this->installDir,
+                $srcDirectory,
+                $this->projectConfig->getInstallDir(),
                 $srcDirectory
             );
         }
     }
 
+    /**
+     * 
+     */
     function addSourceFiles() {
         foreach ($this->buildConfig->getSourceFiles() as $srcFile) {
             $this->filesMacro .= sprintf(
                 "%s/%s\n",
-                $this->installDir,
+                $this->projectConfig->getInstallDir(),
                 $srcFile
             );
             
             $this->buildScript .= sprintf(
                 "cp \$RPM_BUILD_DIR/%s \$RPM_BUILD_ROOT/%s/%s \n",
                 $srcFile,
-                $this->installDir,
+                $this->projectConfig->getInstallDir(),
                 $srcFile
             );
         }
     }
 
+    /**
+     * @return string
+     */
     function generateSpec() {
         $projectName = $this->projectConfig->getName();
         $version = $this->projectConfig->getVersion();
@@ -125,19 +149,18 @@ class SpecBuilder {
         $release = $this->projectConfig->getRelease();
         $summary = $this->projectConfig->getSummary();
 
-        //$prepScript = "%setup -n %{name}-%{unmangled_version} -n %{name}-%{unmangled_version}";
-        $dir = "/home/intahwebz";
-        $blah = "intahwebz-1.2.3";
         $prepScript = sprintf(
-            "%%{__mkdir} -p \$RPM_BUILD_ROOT%s/%s",
-            $dir,
-            $blah
+            "%%{__mkdir} -p \$RPM_BUILD_ROOT%s",
+            $this->projectConfig->getInstallDir()
         );
 
         $installScript = "";
     
         $this->processCrontab();
         $this->addInstallFiles();
+
+        
+        
         $this->addDataDirectories();
         $this->addSourceDirectories();
         $this->addSourceFiles();
@@ -145,16 +168,51 @@ class SpecBuilder {
         $license = null;
         $licenseString = "License: None";
     
-        if ($license) {
+        if ($license = $this->projectConfig->getLicense()) {
             //@TODO - get from project config
             $licenseString = "License: $license)";
+            
         }
 
         $fullDescription = $this->projectConfig->getFullDescription();
+        $arch = $this->projectConfig->getArch();
+        $group = $this->projectConfig->getRPMGroup();
+
         $cleanScript = "rm -rf \$RPM_BUILD_ROOT";
+
+
+
+        //This should be the last addition to the build script
+        $this->addPostBuildScripts();
+
 
         $buildScript = $this->buildScript;
         $filesMacro = $this->filesMacro;
+
+
+
+
+//        /usr/bin/getent group myservice || /usr/sbin/groupadd -r myservice
+//        /usr/bin/getent passwd myservice || /usr/sbin/useradd -r -d /path/to/program -s /sbin/nologin myservice
+
+        //Requires(pre): /usr/sbin/useradd, /usr/bin/getent        
+//Requires(postun): /usr/sbin/userdel
+// /usr/bin/getent passwd %s || /usr/sbin/useradd -r -d /path/to/program -s /sbin/nologin myservice\n",
+        
+   $preScript = sprintf(
+       "/usr/bin/getent group %s || groupadd -r %s
+/usr/bin/getent passwd %s || useradd --key UMASK=0022 -m -g %s %s",
+       $this->projectConfig->getUnixGroup(),
+       $this->projectConfig->getUnixGroup(),
+       $this->projectConfig->getUnixUser(),
+       $this->projectConfig->getUnixGroup(),
+       $this->projectConfig->getUnixUser()
+
+   );
+        
+        
+        
+        
 
         $specContents = <<< END
 %define name $projectName
@@ -168,11 +226,16 @@ Version: %{version}
 Release: %{release}
 #Source0: %{name}-%{unmangled_version}.tar.gz
 $licenseString
-Group: Development/Libraries
+Group: $group
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
-BuildArch: noarch
+BuildArch: $arch
 AutoReqProv: no
+Requires(pre): /usr/sbin/useradd, /usr/bin/getent
+
+%pre
+$preScript
+
 
 %description
 $fullDescription

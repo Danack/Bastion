@@ -44,8 +44,8 @@ writeSatisJsonFile($filename, $config);
 echo "Finished downloading, running Satis".PHP_EOL;
 $absolutePath = dirname(realpath($config->getOutputDirectory()));
 
-$application = new Application();
-$appDefinition = $application->getDefinition();
+$satisApplication = new Application();
+$appDefinition = $satisApplication->getDefinition();
 
 //Create the command
 $input = new ArrayInput([
@@ -55,13 +55,13 @@ $input = new ArrayInput([
 ]);
 
 
-
-
 //Create the application and run it with the commands
-$application->run($input);
+$satisApplication->setAutoExit(false);
+$satisApplication->run($input);
 
+echo "step 3 fix paths.";
 //Step 3 - fix the broken paths
-fixPaths($config->getOutputDirectory(), $config->getSiteName());
+fixPaths($config->getOutputDirectory(), 'http://'.$config->getSiteName());
 
 //Step 4 upload all the things
 $injector->execute('syncArtifactBuild');

@@ -4,6 +4,8 @@
 namespace Bastion;
 
 
+use Artax\Request;
+
 class Progress {
 
     private $displayLines = [];
@@ -54,15 +56,23 @@ class Progress {
     public function getWatcher($uriOrRequest) {
         
         $watcherID = $this->nextWatcherID();
+
+        if ($uriOrRequest instanceof Request) {
+            $uri = $uriOrRequest->getUri();
+        }
+        else {
+            $uri = $uriOrRequest;
+        }
         
-        $callback = function($update) use ($watcherID) {
-            $this->observe($update, $watcherID);
+        
+        $callback = function($update) use ($watcherID, $uri) {
+            $this->observe($update, $watcherID, $uri);
         };
         
         return $callback;
     }
     
-    public function observe($update, $watcherID) {
+    public function observe($update, $watcherID, $uri) {
 
         //echo "ID = $watcherID ".$update['bar'].PHP_EOL;
         
@@ -88,6 +98,10 @@ class Progress {
             return;
         }
 
+        if (strpos($update['bar'], 'SIZE UNKNOWN') !== false) {
+            return;
+        }
+        
 //        if ($update['isRequestSendComplete'] == false) {
 //            return;
 //        }
@@ -105,7 +119,7 @@ class Progress {
         }
 
         $this->displayLines[$watcherID] = $update['bar'];
-        echo $watcherID.$update['bar'].PHP_EOL;
+        echo $watcherID.$update['bar'].$uri.PHP_EOL;
         //$this->render();
     }
 }

@@ -18,9 +18,6 @@ class RPMProjectConfig {
     private $rpmGroup = "Internet Applications";
     private $license = 'None';
 
-    private $unixUser = 'www-data';
-    private $unixGroup = 'www-data';
-    
     //@todo - read scripts from composer.json, or possibly
     //decide against ever implementing these.
 
@@ -57,10 +54,6 @@ class RPMProjectConfig {
      * @throws RPMConfigException
      */
     public function checkData() {
-
-
-        
-        
         $errors = [];
         if ($this->name == null) {
             $errors[] = 'name is null, it must be set in the projectConfig';
@@ -168,36 +161,7 @@ class RPMProjectConfig {
     function getRPMGroup() {
         return $this->rpmGroup;
     }
-
-    /**
-     * @return string
-     */
-    public function getUnixUser() {
-        return $this->unixUser;
-    }
-
-    /**
-     * @param string $unixUser
-     */
-    public function setUnixUser($unixUser) {
-        $this->unixUser = $unixUser;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUnixGroup() {
-        return $this->unixGroup;
-    }
-
-    /**
-     * @param string $unixGroup
-     */
-    public function setUnixGroup($unixGroup) {
-        $this->unixGroup = $unixGroup;
-    }
-
-
+    
     /**
      * @param string $architecture
      */
@@ -210,13 +174,6 @@ class RPMProjectConfig {
      */
     public function setFullDescription($fullDescription) {
         $this->fullDescription = $fullDescription;
-    }
-
-    /**
-     * @param string $group
-     */
-    public function setGroup($group) {
-        $this->group = $group;
     }
 
     /**

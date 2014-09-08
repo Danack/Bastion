@@ -125,7 +125,7 @@ class ArtifactFetcher {
         foreach ($repoTags->getIterator() as $repoTag) {
             //Check that this is the same as what is being written to ignore list file
 
-            list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
+            list($repoTagName, ) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
             if ($this->repoInfo->isInIgnoreList($repoTagName) == true) {
                 continue;
             }
@@ -178,10 +178,10 @@ class ArtifactFetcher {
             $this->processDownloadedFileResponse($response, $owner, $repo, $repoTag);
         };
 
-        list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
-        $outputString = "getRepoArtifact: $repoTagName ";
+        list(, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
+//        $outputString = "getRepoArtifact: $repoTagName ";
         if (file_exists($zipFilename) == false) {
-            $outputString .= "Starting download";
+            //$outputString .= "Starting download";
             //$this->progress->displayStatus($outputString);
             $this->urlFetcher->downloadFile($repoTag->zipballURL, $responseCallback);
         }
@@ -227,8 +227,10 @@ class ArtifactFetcher {
             $this->modifyComposerJsonInZip($tmpfname, $repoTag->name);
         }
         catch (InvalidComposerFileException $icf) {
-            echo "Failed to modify composer.json for repo $repo with tag ".$repoTag->name.": ".$icf->getMessage()." .\n";
-            $this->repoInfo->addRepoTagToIgnoreList($repoTagName);
+            $reason = 'InvalidComposerFileException for '.$repo.' '.$repoTag->name.': '.$icf->getMessage();
+            //$reason = "Failed to modify composer.json for repo $repo with tag ".$repoTag->name.": ".$icf->getMessage();
+            echo $reason."\n";
+            $this->repoInfo->addRepoTagToIgnoreList($repoTagName, $reason);
             unlink($tmpfname);
             return;
         }
@@ -252,12 +254,11 @@ class ArtifactFetcher {
      * @throws \Exception
      */
     function modifyComposerJsonInZip($zipFilename, $tag) {
-
         $zip = new \ZipArchive;
         $result = $zip->open($zipFilename, \ZipArchive::ER_READ);
 
         if ($result !== TRUE) {
-            throw new \Exception("Failed to open $zipFilename to check version info.");
+            throw new BastionException("Failed to open $zipFilename to check version info.");
         }
 
         $shortestIndex = -1;
@@ -279,7 +280,9 @@ class ArtifactFetcher {
 
         if ($shortestIndex == -1) {
             $zip->close();
-            throw new InvalidComposerFileException("Failed to find the composer.json file, delete $zipFilename \n");
+            throw InvalidComposerFileException::fromMissingComposer(
+                $zipFilename
+            );
         }
 
         $contents = $zip->getFromIndex($shortestIndex);
@@ -288,15 +291,15 @@ class ArtifactFetcher {
             $contentsInfo = json_decode($contents, true);
         }
         catch (\Exception $e) {
-            throw new InvalidComposerFileException("JSON decode failed. \n");
-        }
-
-        if (is_array($contentsInfo) == false) {
-            throw new InvalidComposerFileException("Json_decode failed for contents [" . $contents . "] - non-utf8 characters present?");
+            throw InvalidComposerFileException::fromJsonDecodeFailed(
+                $zipFilename
+            );
         }
 
         if (!isset($contentsInfo['name'])) {
-            throw new InvalidComposerFileException("Zipfile $zipFilename has no name defined in its composer.json");
+            throw InvalidComposerFileException::fromMissingName(
+                $zipFilename
+            );
         }
         
         $modifiedContents = $this->ensureValidVersionIsSet($contentsInfo, $tag);
@@ -331,7 +334,7 @@ class ArtifactFetcher {
                 $versionParser->normalize($version);
             }
             catch(\UnexpectedValueException $uve) {
-                throw new InvalidComposerFileException("Version ".$version." isn't a usable version name.");
+                throw InvalidComposerFileException::fromBadSemver($version);
             }
             
             $contentsInfo['version'] = $version;
@@ -343,7 +346,9 @@ class ArtifactFetcher {
             $versionParser->normalize($contentsInfo['version']);
         }
         catch(\UnexpectedValueException $uve) {
-            throw new InvalidComposerFileException("Version ".$contentsInfo['version']." isn't a usable version name.");
+            throw InvalidComposerFileException::fromBadNormalizedSemver(
+                $contentsInfo['version']
+            );
         }
 
         return false;

@@ -50,13 +50,17 @@ class FileStoredRepoInfo implements RepoInfo {
      * Mark a filename to skip. This is used to avoid repeatedly downloading bad versions,
      * or to exlcude unwanted version completely.
      * @param $zipFilename
+     * @param $reason
      */
-    function addRepoTagToIgnoreList($zipFilename) {
+    function addRepoTagToIgnoreList($zipFilename, $reason) {
         $this->ignoreList[] = $zipFilename;
-        file_put_contents($this->ignoreListFilename, $zipFilename . "\n", FILE_APPEND);
+
+        $newString = $zipFilename . "\n    ". $reason."\n";
+        file_put_contents($this->ignoreListFilename, $newString, FILE_APPEND);
     }
-    
+
     /**
+     * @param $zipFilename
      * @return bool
      */
     function isInIgnoreList($zipFilename) {

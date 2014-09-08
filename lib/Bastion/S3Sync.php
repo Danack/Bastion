@@ -3,8 +3,6 @@
 namespace Bastion;
 
 use Aws\S3\S3Client;
-use Bastion\S3ACLGenerator;
-
 
 
 class S3Sync implements Uploader {
@@ -101,7 +99,6 @@ class S3Sync implements Uploader {
 
     /**
      * 
-     * @param $restrictByIP
      */
     function finishProcessing() {
         $allowCondition = $this->s3ACLGenerator->generateConditionBlock();

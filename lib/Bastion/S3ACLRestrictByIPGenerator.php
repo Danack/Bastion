@@ -19,19 +19,17 @@ class S3ACLRestrictByIPGenerator implements S3ACLGenerator {
             );
         };
 
-        $restrictByIP = false;
         $conditions = array_map($generateCondition, $this->allowedIPAddresses);
         $allowCondition = implode(', ', $conditions);
-        $allowCondition = '';
-
-        if ($restrictByIP) {
-            //Well this is ugly - this should whole function should
-            //be refactored to separate classes to represent the conditions
-            //But as this is a proof of concept...not today.
-            $allowCondition = '"Condition": {
+        
+        //Well this is ugly - this should whole function should
+        //be refactored to separate classes to represent the conditions
+        //But as this is a proof of concept...not today.
+        $allowCondition = '"Condition": {
             '.$allowCondition.'
-            },';
-        }
+          },';
+
+        return $allowCondition;
     }
 }
 

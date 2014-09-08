@@ -2,6 +2,9 @@
 
 namespace Bastion\RPM;
 
+use Bastion\BastionException;
+
+
 class SpecBuilder {
 
     /** @var RPMBuildConfig  */
@@ -12,10 +15,26 @@ class SpecBuilder {
     private $filesMacro = '';
     private $buildScript = '';
     private $installDir;
+    
+    private $buildDir;
+    
+    private $specFilename = 'intahwebz';
+    
 
-    function __construct(RPMBuildConfig $buildConfig, RPMProjectConfig $projectConfig) {
+    function __construct(RPMBuildConfig $buildConfig, RPMProjectConfig $projectConfig, $buildDir) {
         $buildConfig->checkData();
         $projectConfig->checkData();
+        $this->buildDir = realpath($buildDir);
+        
+        if ($this->buildDir == null) {
+            throw new RPMConfigException("Temp directory for building RPM, `$buildDir` is not readable.", []);
+        }
+        if (strlen($this->buildDir) < 8) {
+            throw new RPMConfigException("Temp directory `$buildDir` does not include BuildRPM; maybe symlink has gone weird?", []);
+        }
+
+        $this->buildDir .= '/';
+        
         //cloning prevents mutability
         $this->buildConfig = clone $buildConfig;
         $this->projectConfig = clone $projectConfig;
@@ -24,8 +43,8 @@ class SpecBuilder {
         $this->filesMacro = sprintf(
             "%%files
 %%defattr(555,%s,%s)\n",
-            $projectConfig->getUnixUser(),
-            $projectConfig->getUnixGroup()
+            $buildConfig->getUnixUser(),
+            $buildConfig->getUnixGroup()
         );
     }
 
@@ -140,6 +159,73 @@ class SpecBuilder {
     }
 
     /**
+     * @param $sourceDirectory
+     * @throws BastionException
+     * @internal param $destDirectory
+     */
+    function copyPackageToBuild($sourceDirectory) {
+        $destDirectory = $this->buildDir.'BUILD';
+        $this->copyDirectory($sourceDirectory, $destDirectory);
+    }
+     
+    function copyDirectory($sourceDirectory, $destDirectory) {
+        $files = scandir($sourceDirectory);
+        $source = $sourceDirectory."/";
+        $destination = $destDirectory."/";
+
+        foreach ($files as $file) {
+            if (in_array($file, array(".",".."))) {
+                continue;
+            }
+
+            $sourceFilename = $source.$file;
+            $destFilename = $destination.$file;
+            
+            if (is_dir($sourceFilename) == true) {
+//                echo $file.PHP_EOL;
+                @mkdir($destFilename, 0755, true);
+                $this->copyDirectory($sourceFilename, $destFilename);
+                continue;
+            }
+
+            if (!@copy($sourceFilename, $destFilename)) {
+                throw new BastionException(
+                    "Failed to copy file from $sourceFilename to $destFilename"
+                );
+            }
+        }
+    }
+
+
+    /**
+     * Generates the spec file and prepares the required directories.
+     * @param $sourceDirectory
+     * @throws BastionException
+     */
+    function prepareSetupRPM($sourceDirectory) {
+        //Clean out any old directory
+        @unlink($this->buildDir.'BUILD');
+        if (is_dir($this->buildDir.'BUILD') == true) {
+            throw new BastionException(
+                "BUILD directory already exists in directory ".$this->buildDir." which means the attempt to delete it failed."
+            );
+        }
+
+        //Create the RPM directories
+        @mkdir($this->buildDir.'BUILD', 0755, true);
+        @mkdir($this->buildDir.'BUILDROOT', 0755, true);
+        @mkdir($this->buildDir.'RPMS', 0755, true);
+        @mkdir($this->buildDir.'SOURCES', 075, true);
+        @mkdir($this->buildDir.'SPECS', 0755, true);
+        @mkdir($this->buildDir.'SRPMS', 0755, true);
+        $this->copyPackageToBuild($sourceDirectory);
+        $specFile = $this->generateSpec();
+        $fullSpecFilename = $this->buildDir.'SPECS/'.$this->specFilename.'.spec';
+        file_put_contents($fullSpecFilename, $specFile);
+    }
+    
+    /**
+     * Generates the RPM SPEC file
      * @return string
      */
     function generateSpec() {
@@ -158,9 +244,6 @@ class SpecBuilder {
     
         $this->processCrontab();
         $this->addInstallFiles();
-
-        
-        
         $this->addDataDirectories();
         $this->addSourceDirectories();
         $this->addSourceFiles();
@@ -180,39 +263,25 @@ class SpecBuilder {
 
         $cleanScript = "rm -rf \$RPM_BUILD_ROOT";
 
-
-
         //This should be the last addition to the build script
         $this->addPostBuildScripts();
-
 
         $buildScript = $this->buildScript;
         $filesMacro = $this->filesMacro;
 
-
-
-
-//        /usr/bin/getent group myservice || /usr/sbin/groupadd -r myservice
-//        /usr/bin/getent passwd myservice || /usr/sbin/useradd -r -d /path/to/program -s /sbin/nologin myservice
-
-        //Requires(pre): /usr/sbin/useradd, /usr/bin/getent        
-//Requires(postun): /usr/sbin/userdel
-// /usr/bin/getent passwd %s || /usr/sbin/useradd -r -d /path/to/program -s /sbin/nologin myservice\n",
+        $createUserString = <<< END
+/usr/bin/getent group %s || groupadd -r %s
+/usr/bin/getent passwd %s || useradd --key UMASK=0022 -m -g %s %s    
+END;
         
-   $preScript = sprintf(
-       "/usr/bin/getent group %s || groupadd -r %s
-/usr/bin/getent passwd %s || useradd --key UMASK=0022 -m -g %s %s",
-       $this->projectConfig->getUnixGroup(),
-       $this->projectConfig->getUnixGroup(),
-       $this->projectConfig->getUnixUser(),
-       $this->projectConfig->getUnixGroup(),
-       $this->projectConfig->getUnixUser()
-
-   );
-        
-        
-        
-        
+        $preScript = sprintf(
+            $createUserString,
+            $this->buildConfig->getUnixGroup(),
+            $this->buildConfig->getUnixGroup(),
+            $this->buildConfig->getUnixUser(),
+            $this->buildConfig->getUnixGroup(),
+            $this->buildConfig->getUnixUser()
+       );
 
         $specContents = <<< END
 %define name $projectName
@@ -235,8 +304,7 @@ Requires(pre): /usr/sbin/useradd, /usr/bin/getent
 
 %pre
 $preScript
-
-
+        
 %description
 $fullDescription
 
@@ -257,5 +325,46 @@ $filesMacro
 END;
 
         return $specContents;
+    }
+
+    /**
+     * @throws BastionException
+     */
+    function run() {
+        $returnValue = 0;
+        $startDirectory = getcwd();
+        $changedCorrectly = chdir($this->buildDir);
+
+        if ($changedCorrectly == false) {
+            throw new BastionException("Failed to enter directory ".$this->buildDir." to build RPM SPEC.");
+        }
+
+        echo "Building RPM spec in directory ".getcwd().PHP_EOL;
+        $command =  'rpmbuild --define "_topdir `pwd`" -ba SPECS/'.$this->specFilename.'.spec';
+        passthru($command, $returnValue);
+        chdir($startDirectory);
+        
+        if ($returnValue != 0) {
+            throw new BastionException("rpmbuild didn't return 0 - presumably something went wrong.");
+        }
+    }
+
+    /**
+     * @param $repoDirectory
+     */
+    function copyPackagesToRepoDir($repoDirectory) {
+        $filePatterns = [
+            $this->buildDir.'/RPMS/noarch/*.rpm' => 'RPMS/noarch',
+            $this->buildDir.'/RPMS/x86_64/*.rpm' => 'RPMS/x86_64',
+            $this->buildDir.'/SRPMS/*.rpm'       => 'SRPMS',
+        ];
+        
+        foreach ($filePatterns as $sourcePattern => $destDirectory) {
+            $files = glob($sourcePattern);
+            var_dump($files);
+            
+            echo "Need to copy to ".$repoDirectory.'/'.$destDirectory;
+            exit(0);
+        }
     }
 }

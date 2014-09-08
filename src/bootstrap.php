@@ -6,10 +6,20 @@ use Artax\Client as ArtaxClient;
 use Alert\Reactor;
 use Alert\ReactorFactory;
 use ConsoleKit\Console;
+use ConsoleKit\Widgets\Dialog;
+
 use Bastion\Config;
 use Bastion\Uploader;
-use ConsoleKit\Widgets\Dialog;
 use Bastion\BastionException;
+use Bastion\RPM\RPMProjectConfig;
+use Bastion\RPM\BuildConfigProvider;
+use Bastion\RPM\RPMConfigException;
+use Bastion\RPM\SpecBuilder;
+
+use Composer\Json\JsonValidationException;
+use Composer\Console\Application as ComposerApplication;
+use Composer\Command\UpdateCommand;
+use Symfony\Component\Console\Input\ArrayInput;
 
 use Artax\Cookie\CookieJar;
 use Artax\HttpSocketPool;
@@ -582,8 +592,6 @@ function createInjector(Config $config) {
     );
 
     $injector->share('Bastion\Progress');
-    
-    
     $injector->delegate('Alert\Reactor', function() {
             return (new ReactorFactory)->select();
     });
@@ -696,4 +704,168 @@ END;
     if ($written === false) {
         throw new LogicException("Failed to write $filename");
     }
+}
+
+/**
+ * @todo This has a race condition
+ * @param bool $dir
+ * @param string $prefix
+ * @return null|string
+ */
+function tempdir($directory, $prefix) {
+    $path = $directory.'/'.$prefix;
+    $path .= '_'.date("Y_m_d_H_i_s").'_'.uniqid();
+    if (file_exists($path)) {
+        throw new \Bastion\BastionException('Path '.$path.' already exists - that seems highly unlikely.');
+    }
+
+    @mkdir($path, 0755, true);
+    if (is_dir($path)) {
+        return $path;
+    }
+    return null;
+}
+
+
+
+function runComposerInstall($directory) {
+
+
+    //Create the commands
+    $input = new ArrayInput([
+        'command' => 'install',
+        '--no-dev' => true,
+        '--working-dir' => $directory
+    ]);
+
+    //Create the application and run it with the commands
+    $application = new ComposerApplication();
+    $application->setAutoExit(false);
+
+    //if (false) {
+    $result = $application->run($input);
+    //}
+
+    if ($result != 0) {
+        echo "Error running composer, see above.";
+        exit(0);
+    }
+    
+}
+
+/**
+ * @param $sourceDirectory
+ * @return RPMProjectConfig
+ * @throws BastionException
+ */
+function readProjectConfig($sourceDirectory) {
+    
+    $projectConfig = new RPMProjectConfig();
+
+    try {
+        $projectConfig->readComposerJsonFile($sourceDirectory.'/composer.json');
+    }
+    catch (JsonValidationException $jve) {
+        echo $jve->getMessage().PHP_EOL;
+        foreach($jve->getErrors() as $error) {
+            echo $error;
+            exit(-1);
+        }
+    }
+    
+    return $projectConfig;
+}
+
+
+/**
+ * @param $archiveFilename
+ * @param $buildDir
+ * @throws BastionException
+ */
+function extractZipAndReturnRootDirectory($archiveFilename, $buildDir) {
+    $zip = new ZipArchive;
+    $result = $zip->open($archiveFilename);
+
+    if ($result !== true) {
+        echo "Failed to open archive ";
+        exit(-1);
+    }
+
+    $result = $zip->extractTo($buildDir);
+    
+    if ($result == false) {
+        throw new \Bastion\BastionException("Failed to extract archive $archiveFilename.");
+    }
+    
+    $entries = glob($buildDir.'/*', GLOB_ONLYDIR);
+
+    if (count($entries) == 0) {
+        throw new \Bastion\BastionException("Archive $archiveFilename did not contain any directories - not a valid archive. ");
+    }
+
+    if (count($entries) > 1) {
+        throw new \Bastion\BastionException("Archive $archiveFilename contains ".count($entries)." root directories - not a valid archive. ");
+    }
+
+    foreach ($entries as $entry) {
+        $lastSlashPosition = strrpos($entry, '/');
+
+        if ($lastSlashPosition !== false) {
+            //return substr($entry, $lastSlashPosition + 1);
+            return $entry;
+        }
+    }
+
+    throw new \Bastion\BastionException("Failed to find root directory of archive $archiveFilename");
+}
+
+
+/**
+ * @param $artifactFilename
+ * @param $buildDir
+ * @param $repoDirectory
+ * @param $version
+ * @throws BastionException
+ */
+function rpmArtifact(
+    $artifactFilename,
+    $buildDir,
+    $repoDirectory,
+    $version,
+    BuildConfigProvider $buildConfigProvider) {
+
+    if (true) {
+        $sourceDirectory = extractZipAndReturnRootDirectory(
+            $artifactFilename,
+            $buildDir
+        );
+
+    
+        runComposerInstall($sourceDirectory);
+    }
+    else {
+        $sourceDirectory = "/documents/projects/github/Bastion/Bastion/temp/BuildRPM_2014_09_07_18_40_36_540ca6a4446f0/intahwebz-master";
+    }
+
+    $projectConfig = readProjectConfig($sourceDirectory);
+    $buildConfig = $buildConfigProvider->getBuildConfig($sourceDirectory);
+    $projectConfig->setVersion($version);
+
+    try {
+        $specBuilder = new SpecBuilder($buildConfig, $projectConfig, $buildDir);
+    }
+    catch (RPMConfigException $ce) {
+        echo "Errors detected in config:".PHP_EOL;
+        foreach ($ce->getErrors() as $error) {
+            echo "   ".$error.PHP_EOL;
+        }
+        exit(-1);
+    }
+    
+    
+    $specBuilder->prepareSetupRPM($sourceDirectory);
+    $specBuilder->run();
+    $specBuilder->copyPackagesToRepoDir($repoDirectory);
+    //copy built files to repo
+    //unlink $buildDir
 }

@@ -10,16 +10,14 @@ class InvalidComposerFileException extends \Exception {
     const BAD_SEMVER_NORMALIZED = 2;
     const MISSING_COMPOSER_JSON = 3;
     const COMPOSER_JSON_DECODE_FAILED = 4;
-    //const COMPOSER_JSON_EMPTY = 5;
-    const COMPOSER_JSON_MISSING_NAME = 6;
+    const COMPOSER_JSON_MISSING_NAME = 5;
 
     private static $errorMessages = [
         1 => "Bad Semver %s in file",
         2 => "Bad semver %s after normalizing",
         3 => "Missing composer json",
         4 => "Composer.josn decode failed",
-        //5 => "Decoded composer.json is empty",
-        6 => "Composer.json missing project name",
+        5 => "Composer.json missing project name",
     ];
 
     public static function fromBadSemver($semver) {
@@ -41,7 +39,7 @@ class InvalidComposerFileException extends \Exception {
     }
 
 
-    public static function fromMissingComposer($semver) {
+    public static function fromMissingComposer() {
         $message = self::$errorMessages[self::MISSING_COMPOSER_JSON];
         return new InvalidComposerFileException($message, self::MISSING_COMPOSER_JSON);
     }

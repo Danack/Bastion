@@ -6,8 +6,8 @@
 
 .. _index:
 
-Welcome to Bastion's documentation!
-===================================
+Welcome to Bastion
+==================
 
 Bastion is an application that helps create and manage your own Satis repository, which removes any dependendcy on Packagist, ever, and also removes a dependency on Github being up when you are deploying an application.
 
@@ -22,5 +22,6 @@ Contents:
    intro
    install
    bastionSatis
+   s3Setup
    bastionRPM
    rpmNotes

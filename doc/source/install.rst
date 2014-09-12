@@ -19,6 +19,8 @@ The config file must be named `bastionConfig.php` and can be placed either in th
 The only requirement for the config file is that it must return a Bastion\Config object. The setup procedure will do this for you, alternatively you can just copy and paste the example config below, and insert the appropriate values yourself.
 
 
+.. _ignorelist:
+
 Ignore list
 ~~~~~~~~~~~
 

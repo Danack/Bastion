@@ -71,56 +71,31 @@ class Progress {
         
         return $callback;
     }
-    
+
+    //        var_dump($update);
+//        exit(0);
+
+//        const CONNECTING = 0;
+//        const SENDING_REQUEST = 1;
+//        const AWAITING_RESPONSE = 2;
+//        const REDIRECTING = 4;
+//        const READING_LENGTH = 8;
+//        const READING_UNKNOWN = 16;
+//        const COMPLETE = 32;
+//        const ERROR = 33;
+
+
     public function observe($update, $watcherID, $uri) {
-
-        //echo "ID = $watcherID ".$update['bar'].PHP_EOL;
-        
-//        var_dump($update);
-//        'sock_procured_at' => $this->socketProcuredAt,
-//            'redirect_count' => $this->redirectCount,
-//            'bytes_rcvd' => $this->bytesRcvd,
-//            'header_bytes' => $this->headerBytes,
-//            'content_length' => $this->contentLength,
-//            'percent_complete' => $this->percentComplete,
-//            'bytes_per_second' => $this->bytesPerSecond,
-//            'is_request_sent' => (bool) $this->isRequestSendComplete,
-//            'is_complete' => (bool) $this->isComplete,
-//            'is_error' =>(bool)  $this->isError,
-//            'bar' => $bar
-
-        
-        if ($update['is_request_sent'] == false) {
-            return;
-        }
-        
-        if(substr($update['bar'], 0, 4) === '[DET') {
+        if ($update['request_state'] < \Artax\Progress::SENDING_REQUEST) {
             return;
         }
 
-        if (strpos($update['bar'], 'SIZE UNKNOWN') !== false) {
+        if ($update['request_state'] >= \Artax\Progress::COMPLETE) {
+            //delete the bar.
             return;
         }
-        
-//        if ($update['isRequestSendComplete'] == false) {
-//            return;
-//        }
 
-        
-        
-        if ($update['is_complete']) {
-            unset($this->expireTimes[$watcherID]);
-            unset($this->displayLines[$watcherID]);
-            return;
-        }
-        
-        if ($update['is_error']) {
-            $this->expireTimes[$watcherID] = time() + 1;
-        }
-
-        $this->displayLines[$watcherID] = $update['bar'];
-        echo $watcherID.$update['bar'].$uri.PHP_EOL;
-        //$this->render();
+        echo $watcherID.' '.$update['fraction_complete'].'% '.$update['request_state'].' '.time().' '.$uri.PHP_EOL;
     }
 }
 

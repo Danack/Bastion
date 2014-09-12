@@ -1,10 +1,15 @@
 ## Bastion
 
 
-Run your own Packagist server, so that you can do Composer update locally. Oh and it also create RPM packages for your applications.
+Run your own Packagist server, so that you can do Composer update locally. Oh and it also creates RPM packages for your applications.
 
 
-### Setup satis repo
+### Documentation
+
+Please see the documentation at http://bastionrpm.com
+
+
+### Quick setup - satis repo
 
 * Run ./src/bastion.php It will ask you to provide a Github access token
 
@@ -16,7 +21,7 @@ You will now have a satis repository uploaded to S3. You can also run this satis
 
 
 
-### Setting up S3 static satis DNS 
+### Quick setup - setting up S3 static satis DNS 
 
 * Setup a bucket in your preferred region, with a name like satis.companyname.com
 

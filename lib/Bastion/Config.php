@@ -15,6 +15,7 @@ class Config {
     private $s3Key;
     private $s3Secret;
     private $s3Region;
+    private $uploaderClass;
     
     function __construct(
         $zipsDirectory, 
@@ -25,7 +26,8 @@ class Config {
         $bucketName,
         $s3Key,
         $s3Secret,
-        $s3Region
+        $s3Region,
+        $uploaderClass
     ) {
 
         if (strpos($zipsDirectory, '/') === 0) {
@@ -100,6 +102,17 @@ class Config {
     public function getRestrictionClass() {
         return $this->restrictionClass;
     }
+    
+    public function getUploaderClass() {
+        return $this->uploaderClass;
+    }
+
+    public function setUploaderClass($uploaderClass) {
+        $this->uploaderClass = $uploaderClass;
+    }
+    
+    
+    
 }
 
  

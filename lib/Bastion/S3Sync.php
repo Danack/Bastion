@@ -81,14 +81,17 @@ class S3Sync implements Uploader {
      * @param $destDirectory
      */
     function syncDirectory($srcDirectory, $destDirectory) {
-        //Make sure folder exists
-        $this->s3Client->putObject(array(
-            'Bucket'     => $this->bucket,
-            'Key'        => $destDirectory.'/',
-            'Body'       => '',
-            'Metadata'   => array(
-            )
-        ));
+        
+        if (strlen($destDirectory)) {
+            //Make sure folder exists, if it is not the root of the r
+            $params = array(
+                'Bucket' => $this->bucket,
+                'Key' => $destDirectory.'/',
+                'Body' => '',
+                'Metadata' => array()
+            );
+            $this->s3Client->putObject($params);
+        }
 
         $this->s3Client->uploadDirectory(
             $srcDirectory,

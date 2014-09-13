@@ -72,19 +72,6 @@ class Progress {
         return $callback;
     }
 
-    //        var_dump($update);
-//        exit(0);
-
-//        const CONNECTING = 0;
-//        const SENDING_REQUEST = 1;
-//        const AWAITING_RESPONSE = 2;
-//        const REDIRECTING = 4;
-//        const READING_LENGTH = 8;
-//        const READING_UNKNOWN = 16;
-//        const COMPLETE = 32;
-//        const ERROR = 33;
-
-
     public function observe($update, $watcherID, $uri) {
         if ($update['request_state'] < \Artax\Progress::SENDING_REQUEST) {
             return;
@@ -95,7 +82,14 @@ class Progress {
             return;
         }
 
-        echo $watcherID.' '.$update['fraction_complete'].'% '.$update['request_state'].' '.time().' '.$uri.PHP_EOL;
+        if (isset($update['fraction_complete'])) {
+            $percentComplete = intval(100 * $update['fraction_complete']);
+            echo $watcherID.' '.$percentComplete.'% '.$update['request_state'].' '.time().' '.$uri.PHP_EOL;
+        }
+        else {
+            echo $watcherID.' '.$update['bytes_rcvd'].' bytes '.$update['request_state'].' '.time().' '.$uri.PHP_EOL;
+        }
+        
     }
 }
 

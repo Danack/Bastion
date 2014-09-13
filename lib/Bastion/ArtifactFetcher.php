@@ -121,7 +121,7 @@ class ArtifactFetcher {
      * @param \GithubService\Model\RepoTags $repoTags
      */
     function processRepoTags($owner, $repo, \GithubService\Model\RepoTags $repoTags) {
-        $this->progress->displayStatus("process repo tags owner $owner, repo $repo!");
+        $this->progress->displayStatus("process repo tags owner $owner, repo $repo.");
         foreach ($repoTags->getIterator() as $repoTag) {
             //Check that this is the same as what is being written to ignore list file
 
@@ -178,8 +178,8 @@ class ArtifactFetcher {
             $this->processDownloadedFileResponse($response, $owner, $repo, $repoTag);
         };
 
-        list(, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
-//        $outputString = "getRepoArtifact: $repoTagName ";
+        list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
+
         if (file_exists($zipFilename) == false) {
             //$outputString .= "Starting download";
             //$this->progress->displayStatus($outputString);
@@ -188,6 +188,7 @@ class ArtifactFetcher {
         else {
             //$outputString .= "$zipFilename already exists.";
             //$this->progress->displayStatus($outputString);
+            $this->repoInfo->addRepoTagToUsingList($repoTagName);
         }
     }
     

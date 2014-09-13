@@ -18,7 +18,6 @@ use Bastion\RPM\SpecBuilder;
 
 use Composer\Json\JsonValidationException;
 use Composer\Console\Application as ComposerApplication;
-use Composer\Command\UpdateCommand;
 use Symfony\Component\Console\Input\ArrayInput;
 
 use Artax\Cookie\CookieJar;
@@ -80,9 +79,6 @@ class DebugClient extends ArtaxClient {
         
         return $promise;
     }
-    
-
-    
 }
 
 
@@ -112,31 +108,52 @@ function writeConfig(
     $configBody = <<< END
 <?php
 
-    \$zipsDirectory = '$zipsDirectory';
-    \$accessToken = $tokenString;
-    \$s3Key = '$s3Key';
-    \$s3Secret = '$s3Secret';
-    \$s3Region = '$s3Region';
-    \$domainName = '$domainName';
-    
-    // Uploader class should be one of 
-    // null - skip uploading
-    // 'Bastion\S3Sync' - the included S3 uploader.
-    //
-    // Or any class that implements the
-    
-    \$uploaderClass = '$uploaderClass';
-    
-    //If S3 is chosen as the uploader, the restriction class will be
-    //applied to restrict who can access the files
-    \$restrictionClass = '$restrictionClass';
+// The directory the zip files will be downloaded to and where the
+// Satis repo files will be generated.
+\$zipsDirectory = '$zipsDirectory';
 
-    \$repoList = [
-        //Put the list of github repos that you want to have available
-        //in here as "owner/repo" e.g.
-        //
-        //"Behat/Mink",
-    ];
+// The Github access token. Technically Bastion can work without this being set,
+// however the Github has a much lower rate limit for unsigned requests.
+\$githubAccessToken = $tokenString;
+
+// The S3 key - used if the S3 uploader is enabled
+\$s3Key = '$s3Key';
+
+// The S3 secret - used if the S3 uploader is enabled
+\$s3Secret = '$s3Secret';
+
+// The S3 region the bucket will be created in if it doesn't already exist. Note
+// buckets cannot be moved once created.
+\$s3Region = '$s3Region';
+\$domainName = '$domainName';
+
+// Uploader class should be one of 
+// null - skip uploading
+// 'Bastion\S3Sync' - the included S3 uploader.
+// alternative you can specify any class that implements the 
+// Bastion\Uploader interface if you want to add your own.
+\$uploaderClass = '$uploaderClass';
+
+//If S3 is chosen as the uploader, the restriction class will be
+//applied to restrict who can access the files
+\$restrictionClass = '$restrictionClass';
+
+//The list of github repos that you want your Bastion repo to provide.
+//They should be listed as the Github "owner/repo" not the packagist name
+\$repoList = [
+    //"Behat/Mink",
+];
+
+//The config file must return a config object.
+return new Config(
+    \$zipsDirectory, \$dryRun, 
+    \$githubAccessToken, \$repoList, 
+    \$restrictionClass, \$bucketName,
+    \$s3Key, \$s3Secret,
+    \$s3Region,
+    \$uploaderClass
+);
+    
 
 END;
 
@@ -415,7 +432,7 @@ function generateConfig(Console $console) {
 
 
 /**
- * @return \Bastion\Config
+ * @return \Bastion\Config\Config
  */
 function getConfig() {
 
@@ -424,11 +441,9 @@ function getConfig() {
         realpath(__DIR__)."/../".CONFIG_FILE_NAME, //project root
     ];
 
-
     foreach ($configLocations as $configLocation) {
         if (file_exists($configLocation) == true) {
             $config = include_once $configLocation;
-
             return $config;
         }
     }
@@ -562,17 +577,27 @@ function createS3Client(Config $config) {
  * @return \Auryn\Provider
  */
 function createInjector(Config $config) {
-
     $injector = new \Auryn\Provider();
+    $injector->alias('Bastion\Config', get_class($config));
 
+    $injector->alias(
+        'ArtaxServiceBuilder\ResponseCache',
+        'ArtaxServiceBuilder\ResponseCache\FileResponseCache'
+    );
+    
     $injector->share($config);
-    $injector->alias('GithubService\GithubService', 'GithubService\GithubArtaxService\GithubArtaxService');
+    $injector->alias(
+        'GithubService\GithubService',
+        'GithubService\GithubArtaxService\GithubArtaxService'
+    );
 
     $injector->define('Bastion\S3ACLRestrictByIPGenerator', [':allowedIPAddresses' => []]);
     $injector->alias('Bastion\S3ACLGenerator', $config->getRestrictionClass());
-    
-    $injector->alias('Bastion\Uploader', 'Bastion\S3Sync');
-    
+
+    if ($uploaderClass = $config->getUploaderClass()) {
+        $injector->alias('Bastion\Uploader', 'Bastion\S3Sync');
+    }
+
     $injector->define(
         'Bastion\FileStoredRepoInfo',
         [
@@ -596,6 +621,11 @@ function createInjector(Config $config) {
             return (new ReactorFactory)->select();
     });
 
+    $injector->define(
+        'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
+        [':cacheDirectory' => __DIR__.'/../cache']
+    );
+    
 
 //            $asyncClient->setOption('maxconnections', 3);
 //            $asyncClient->setOption('connecttimeout', 10);
@@ -619,8 +649,8 @@ function createInjector(Config $config) {
 
     $injector->delegate(
         'GithubService\GithubArtaxService\GithubArtaxService',
-        function (\Artax\Client $client) use ($config) {
-            return new \GithubService\GithubArtaxService\GithubArtaxService($client, "Danack/Bastion");
+        function (\Artax\Client $client, \ArtaxServiceBuilder\ResponseCache $responseCache) use ($config) {
+            return new \GithubService\GithubArtaxService\GithubArtaxService($client, $responseCache, "Danack/Bastion");
         }
     );
 
@@ -678,6 +708,7 @@ function writeSatisJsonFile($filename, Config $config) {
     $path = $config->getOutputDirectory();
     
     $absolutePath = realpath($path).'/packages/';
+    
 
     $text = <<< END
 
@@ -840,7 +871,6 @@ function rpmArtifact(
             $buildDir
         );
 
-    
         runComposerInstall($sourceDirectory);
     }
     else {
@@ -869,3 +899,15 @@ function rpmArtifact(
     //copy built files to repo
     //unlink $buildDir
 }
+
+
+$config = getConfig();
+
+if ($config == null) {
+    generateConfig($console);
+    return;
+}
+
+$console = new Console();
+
+$injector = createInjector($config);

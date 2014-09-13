@@ -4,20 +4,12 @@ use ConsoleKit\Console;
 use Composer\Satis\Console\Application as SatisApplication;
 use Symfony\Component\Console\Input\ArrayInput;
 
-require_once(realpath(__DIR__).'/bootstrap.php');
-
 if (!ini_get('allow_url_fopen')) {
     echo "allow_url_fopen is not enabled, things will break.";
 }
 
-$config = getConfig();
+require_once(realpath(__DIR__).'/bootstrap.php');
 
-$console = new Console();
-
-if ($config == null) {
-    generateConfig($console);
-    return;
-}
 
 if (count($config->getRepoList()) == 0) {
     echo "Repo list is empty - nothing to process. Please list some ";
@@ -25,18 +17,15 @@ if (count($config->getRepoList()) == 0) {
 }
 
 //Step 0 - bootstrap.
-$injector = createInjector($config);
 $artifactFetcher = $injector->make('Bastion\ArtifactFetcher');
 
 //$artifactFetcher->processRemoveList($config->getZipsDirectory()."/removeList.txt");
 
-$filename = realpath(dirname(__FILE__).'/../');
-$filename .= '/satis-zips.json';
-
 //Step 1 - download everything
 $injector->execute('getArtifacts',[':listOfRepositories' => $config->getRepoList()]);
 
-
+$filename = realpath(dirname(__FILE__).'/../');
+$filename .= '/satis-zips.json';
 writeSatisJsonFile($filename, $config);
 //Step 2 - Run satis to build the site files and description of the packages.
 echo "Finished downloading, running Satis".PHP_EOL;

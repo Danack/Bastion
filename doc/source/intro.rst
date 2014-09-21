@@ -3,11 +3,10 @@ Introduction
 
 Bastion has two functions; building a satis repository for Composer to use, and building RPMs.
 
+Satis repository
+----------------
 
-Bastion Satis building
-----------------------
-
-Compose usually talks to Packagist, which is a Satis repository, to find out what versions of packages are available. There are several reasons why you should use Bastion to build your own Satis repository.
+Bastion allows you to build your own Satis repository. Composer usually talks to Packagist, which is a Satis repository, to find out what versions of packages are available. Building your own Satis repository through Bastion and having Compsoser use it has has the benefits of: 
 
 .. rubric::  Removes dependencies on Packagist and Github
 
@@ -35,19 +34,19 @@ With Bastion you can just add:
 
     symfony/yaml/symfony_yaml_v2.4.3
 
-to the ignoreList and re-run Bastion. That will remove the offending version from your repository. Any future composer update will not be able to find the offending version.
+to the ignoreList and re-run Bastion. That will remove the offending version from your repository. Any future composer update or install will not be able to find the offending version.
 
 .. rubric::  Better security
 
-A long story short, Packagist and Composer does not have perfect security. Although nothing will ever have perfect security by hosting your own repository, you can set up access to it via a secure VPN rather than trasmitting data over the open internet.
+A long story short, Packagist and Composer do not have perfect security, in fact they are far less than perfect. Although nothing will ever have perfect security, by hosting your own repository, you can set up access to it via a secure VPN rather than trasmitting data over the open internet.
 
 This makes quite a few security concerns just 'go away' as they are no longer relevant.
 
 .. rubric::  Shedloads faster
 
-Because you will only have a small subset of packages in your repository compared to Packagist, Compposer has a much easier time resolving the dependencies required by your projects.
+Because you will only have a small subset of packages in your repository compared to Packagist, Compposer has a much easier time resolving the dependencies required by your projects; this means no more long waits for Composer to figure out which packages to install.
 
-Additionally, the download of the packages should be a lot faster, if you can host the repository in your office, as well as having it in your data-centre, close to where your deploy applications.
+Additionally, the download of the packages should be a lot faster, if you can host the Satis repository in your office, as well as having it in your data-centre, close to where your deploy applications.
 
 
 Bastion RPM building

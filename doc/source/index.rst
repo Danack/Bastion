@@ -9,7 +9,7 @@
 Welcome to Bastion
 ==================
 
-Bastion is an application that helps create and manage your own Satis repository, which removes any dependendcy on Packagist, ever, and also removes a dependency on Github being up when you are deploying an application.
+Bastion is an application that allows you to create and manage your own Satis repository. This removes any dependendcy on Packagist, ever, and also removes a dependency on Github being up when you are deploying an application.
 
 Oh and it also allows you to create easily RPM packages from PHP composer'd applications.
 
@@ -22,6 +22,14 @@ Contents:
    intro
    install
    bastionSatis
-   s3Setup
    bastionRPM
+   faq
    rpmNotes
+   
+
+   
+This site is built using `Sphinx <http://sphinx-doc.org/>`_ with the 
+`Sphinx Bootstrap Theme <https://github.com/ryan-roemer/sphinx-bootstrap-theme/>`_      
+  
+      
+      

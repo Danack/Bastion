@@ -1,9 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
     ],
-    "hash": "6ebb9817c42aec9cd72f1869d4007571",
+    "hash": "8e2f4407046746d4d8458a58668e7705",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -11,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "4f3b905d7d8b5b8b56e0c968cde06fff838131d3"
+                "reference": "af60cdbc21fbe972926ecbcc20030dac36c74623"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/4f3b905d7d8b5b8b56e0c968cde06fff838131d3",
-                "reference": "4f3b905d7d8b5b8b56e0c968cde06fff838131d3",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/af60cdbc21fbe972926ecbcc20030dac36c74623",
+                "reference": "af60cdbc21fbe972926ecbcc20030dac36c74623",
                 "shasum": ""
             },
             "require": {
@@ -74,18 +75,7 @@
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
                 "source": "https://github.com/aws/aws-sdk-php/tree/master"
             },
-            "time": "2014-08-26 21:23:50"
-        },
-        {
-            "name": "bagder/ca-bundle",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/bagder/ca-bundle",
-                "reference": "origin/master"
-            },
-            "type": "library",
-            "time": "2014-07-17 23:29:50"
+            "time": "2014-09-17 16:02:42"
         },
         {
             "name": "composer/composer",
@@ -223,17 +213,11 @@
         },
         {
             "name": "danack/artaxservicebuilder",
-            "version": "0.2.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/Danack/ArtaxServiceBuilder.git",
-                "reference": "9f04b25eaeff80ffe98d6cf4ffc8703aecee8885"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Danack/ArtaxServiceBuilder/zipball/9f04b25eaeff80ffe98d6cf4ffc8703aecee8885",
-                "reference": "9f04b25eaeff80ffe98d6cf4ffc8703aecee8885",
-                "shasum": ""
+                "url": "/documents/projects/github/ArtaxServiceBuilder",
+                "reference": "7406ad8ffeca47778dac3cd9018236e18fe38d19"
             },
             "require": {
                 "danack/danack-code": ">=2.4.4"
@@ -250,11 +234,70 @@
                     "ArtaxServiceBuilder": "src/"
                 }
             },
-            "support": {
-                "source": "https://github.com/Danack/ArtaxServiceBuilder/tree/0.2.0",
-                "issues": "https://github.com/Danack/ArtaxServiceBuilder/issues"
+            "time": "2014-09-08 11:25:52"
+        },
+        {
+            "name": "danack/console",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Danack/Console.git",
+                "reference": "cfbdc2f6767d44c8555e535970edec68110f5435"
             },
-            "time": "2014-08-19 14:29:33"
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Danack/Console/zipball/cfbdc2f6767d44c8555e535970edec68110f5435",
+                "reference": "cfbdc2f6767d44c8555e535970edec68110f5435",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "require-dev": {
+                "danack/auryn": "0.14.1",
+                "phpunit/phpunit": "4.2.6",
+                "psr/log": "~1.0",
+                "symfony/process": "~2.1"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.6-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Symfony\\Component\\Console\\": ""
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Danack",
+                    "email": "Danack@basereality.com"
+                },
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "http://symfony.com/contributors"
+                }
+            ],
+            "description": "Refactored Symfony Console Component",
+            "homepage": "http://basereality.com",
+            "keywords": [
+                "cli",
+                "console"
+            ],
+            "support": {
+                "source": "https://github.com/Danack/Console/tree/master",
+                "issues": "https://github.com/Danack/Console/issues"
+            },
+            "time": "2014-09-20 22:11:31"
         },
         {
             "name": "danack/danack-code",
@@ -262,12 +305,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Danack/DanackCode.git",
-                "reference": "b82c83aa61cfbdf236f86ae0874cfc7423465dd9"
+                "reference": "d14f469e7042a6397214037c20ee92246b1c109a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Danack/DanackCode/zipball/b82c83aa61cfbdf236f86ae0874cfc7423465dd9",
-                "reference": "b82c83aa61cfbdf236f86ae0874cfc7423465dd9",
+                "url": "https://api.github.com/repos/Danack/DanackCode/zipball/d14f469e7042a6397214037c20ee92246b1c109a",
+                "reference": "d14f469e7042a6397214037c20ee92246b1c109a",
                 "shasum": ""
             },
             "require": {
@@ -288,22 +331,22 @@
                 "zf2"
             ],
             "support": {
-                "source": "https://github.com/Danack/DanackCode/tree/2.4.4",
+                "source": "https://github.com/Danack/DanackCode/tree/2.4.5",
                 "issues": "https://github.com/Danack/DanackCode/issues"
             },
-            "time": "2014-07-27 14:31:53"
+            "time": "2014-09-15 22:26:39"
         },
         {
             "name": "danack/danackhttp2",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/Danack/http2.git",
+                "url": "https://github.com/Danack/HTTP2.git",
                 "reference": "616eadd3acc058eb56e7a1076a94d74d2484024e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Danack/http2/zipball/616eadd3acc058eb56e7a1076a94d74d2484024e",
+                "url": "https://api.github.com/repos/Danack/HTTP2/zipball/616eadd3acc058eb56e7a1076a94d74d2484024e",
                 "reference": "616eadd3acc058eb56e7a1076a94d74d2484024e",
                 "shasum": ""
             },
@@ -338,15 +381,15 @@
         },
         {
             "name": "danack/githubartaxservice",
-            "version": "0.2.1",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "/documents/projects/github/GithubArtaxService",
-                "reference": "4a8236fa72368dea72be168fac9b509850f4a583"
+                "reference": "5c7e22179984803f961e678ab472ee23d7bb0362"
             },
             "require": {
                 "danack/artaxservicebuilder": "~0.2.0",
-                "danack/danack-code": ">=2.4.3",
+                "danack/danack-code": ">=2.4.5",
                 "danack/danackhttp2": ">=1.2.0",
                 "rdlowrey/artax": "v1.0.0-alpha"
             },
@@ -360,7 +403,7 @@
                     "GithubService": "lib/"
                 }
             },
-            "time": "2014-08-30 20:52:58"
+            "time": "2014-09-15 22:30:30"
         },
         {
             "name": "daverandom/addr",
@@ -449,22 +492,22 @@
         },
         {
             "name": "guzzle/guzzle",
-            "version": "v3.8.1",
+            "version": "v3.9.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "4de0618a01b34aa1c8c33a3f13f396dcd3882eba"
+                "url": "https://github.com/guzzle/guzzle3.git",
+                "reference": "54991459675c1a2924122afbb0e5609ade581155"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/4de0618a01b34aa1c8c33a3f13f396dcd3882eba",
-                "reference": "4de0618a01b34aa1c8c33a3f13f396dcd3882eba",
+                "url": "https://api.github.com/repos/guzzle/guzzle3/zipball/54991459675c1a2924122afbb0e5609ade581155",
+                "reference": "54991459675c1a2924122afbb0e5609ade581155",
                 "shasum": ""
             },
             "require": {
                 "ext-curl": "*",
                 "php": ">=5.3.3",
-                "symfony/event-dispatcher": ">=2.1"
+                "symfony/event-dispatcher": "~2.1"
             },
             "replace": {
                 "guzzle/batch": "self.version",
@@ -491,18 +534,18 @@
                 "guzzle/stream": "self.version"
             },
             "require-dev": {
-                "doctrine/cache": "*",
-                "monolog/monolog": "1.*",
+                "doctrine/cache": "~1.3",
+                "monolog/monolog": "~1.0",
                 "phpunit/phpunit": "3.7.*",
-                "psr/log": "1.0.*",
-                "symfony/class-loader": "*",
-                "zendframework/zend-cache": "<2.3",
-                "zendframework/zend-log": "<2.3"
+                "psr/log": "~1.0",
+                "symfony/class-loader": "~2.1",
+                "zendframework/zend-cache": "2.*,<2.3",
+                "zendframework/zend-log": "2.*,<2.3"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "3.8-dev"
+                    "dev-master": "3.9-dev"
                 }
             },
             "autoload": {
@@ -537,10 +580,10 @@
                 "web service"
             ],
             "support": {
-                "source": "https://github.com/guzzle/guzzle/tree/v3.8.1",
-                "issues": "https://github.com/guzzle/guzzle/issues"
+                "source": "https://github.com/guzzle/guzzle3/tree/v3.9.2",
+                "issues": "https://github.com/guzzle/guzzle3/issues"
             },
-            "time": "2014-01-28 22:29:15"
+            "time": "2014-08-11 04:32:36"
         },
         {
             "name": "justinrainbow/json-schema",
@@ -660,20 +703,19 @@
         },
         {
             "name": "rdlowrey/acesync",
-            "version": "v0.2.7",
+            "version": "v0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rdlowrey/acesync.git",
-                "reference": "47a3a9671f8565ac839be8c689fa16d0395962f8"
+                "reference": "98bbe07221e81ccb0d008ef5144ae5ff9025d0c9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rdlowrey/acesync/zipball/47a3a9671f8565ac839be8c689fa16d0395962f8",
-                "reference": "47a3a9671f8565ac839be8c689fa16d0395962f8",
+                "url": "https://api.github.com/repos/rdlowrey/acesync/zipball/98bbe07221e81ccb0d008ef5144ae5ff9025d0c9",
+                "reference": "98bbe07221e81ccb0d008ef5144ae5ff9025d0c9",
                 "shasum": ""
             },
             "require": {
-                "bagder/ca-bundle": "dev-master",
                 "daverandom/addr": "~0.2.0",
                 "php": ">=5.4.0",
                 "rdlowrey/after": "~0.3.0",
@@ -709,10 +751,10 @@
                 "tls"
             ],
             "support": {
-                "source": "https://github.com/rdlowrey/acesync/tree/v0.2.7",
+                "source": "https://github.com/rdlowrey/acesync/tree/v0.3.0",
                 "issues": "https://github.com/rdlowrey/acesync/issues"
             },
-            "time": "2014-08-26 13:11:57"
+            "time": "2014-09-17 04:52:38"
         },
         {
             "name": "rdlowrey/after",
@@ -816,22 +858,21 @@
         },
         {
             "name": "rdlowrey/artax",
-            "version": "dev-issue-48",
+            "version": "v1.0.0-beta",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rdlowrey/artax.git",
-                "reference": "fd07a717c8eb7ad4283e5c3eb2965e095878cb12"
+                "reference": "3246a5e17276c80138256c99f2417c10821deb3f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rdlowrey/artax/zipball/fd07a717c8eb7ad4283e5c3eb2965e095878cb12",
-                "reference": "fd07a717c8eb7ad4283e5c3eb2965e095878cb12",
+                "url": "https://api.github.com/repos/rdlowrey/artax/zipball/3246a5e17276c80138256c99f2417c10821deb3f",
+                "reference": "3246a5e17276c80138256c99f2417c10821deb3f",
                 "shasum": ""
             },
             "require": {
-                "bagder/ca-bundle": "dev-master",
                 "php": ">=5.4.0",
-                "rdlowrey/acesync": "~0.2",
+                "rdlowrey/acesync": "~0.3",
                 "rdlowrey/after": "~0.2",
                 "rdlowrey/alert": "~0.10"
             },
@@ -862,22 +903,22 @@
                 "rest"
             ],
             "support": {
-                "source": "https://github.com/rdlowrey/artax/tree/issue-48",
+                "source": "https://github.com/rdlowrey/artax/tree/v1.0.0-beta",
                 "issues": "https://github.com/rdlowrey/artax/issues"
             },
-            "time": "2014-09-11 21:38:10"
+            "time": "2014-09-17 04:57:55"
         },
         {
             "name": "rdlowrey/auryn",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/rdlowrey/auryn.git",
+                "url": "https://github.com/rdlowrey/Auryn.git",
                 "reference": "4a30ef91f159d81b6cf1f130fc4db12c8f185040"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rdlowrey/auryn/zipball/4a30ef91f159d81b6cf1f130fc4db12c8f185040",
+                "url": "https://api.github.com/repos/rdlowrey/Auryn/zipball/4a30ef91f159d81b6cf1f130fc4db12c8f185040",
                 "reference": "4a30ef91f159d81b6cf1f130fc4db12c8f185040",
                 "shasum": ""
             },
@@ -923,8 +964,8 @@
                 "ioc"
             ],
             "support": {
-                "source": "https://github.com/rdlowrey/auryn/tree/v0.14.0",
-                "issues": "https://github.com/rdlowrey/auryn/issues"
+                "source": "https://github.com/rdlowrey/Auryn/tree/v0.14.0",
+                "issues": "https://github.com/rdlowrey/Auryn/issues"
             },
             "time": "2014-08-11 13:28:33"
         },
@@ -979,17 +1020,17 @@
         },
         {
             "name": "symfony/console",
-            "version": "dev-master",
+            "version": "v2.5.4",
             "target-dir": "Symfony/Component/Console",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Console.git",
-                "reference": "a61d4fb086e33c3b45c80b638fb915c62eac58a3"
+                "reference": "748beed2a1e73179c3f5154d33fe6ae100c1aeb1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Console/zipball/a61d4fb086e33c3b45c80b638fb915c62eac58a3",
-                "reference": "a61d4fb086e33c3b45c80b638fb915c62eac58a3",
+                "url": "https://api.github.com/repos/symfony/Console/zipball/748beed2a1e73179c3f5154d33fe6ae100c1aeb1",
+                "reference": "748beed2a1e73179c3f5154d33fe6ae100c1aeb1",
                 "shasum": ""
             },
             "require": {
@@ -997,18 +1038,16 @@
             },
             "require-dev": {
                 "psr/log": "~1.0",
-                "symfony/event-dispatcher": "~2.1",
-                "symfony/process": "~2.1"
+                "symfony/event-dispatcher": "~2.1"
             },
             "suggest": {
                 "psr/log": "For using the console logger",
-                "symfony/event-dispatcher": "",
-                "symfony/process": ""
+                "symfony/event-dispatcher": ""
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.6-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1032,9 +1071,9 @@
             "description": "Symfony Console Component",
             "homepage": "http://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/Console/tree/master"
+                "source": "https://github.com/symfony/Console/tree/v2.5.4"
             },
-            "time": "2014-07-20 19:24:23"
+            "time": "2014-08-14 16:10:54"
         },
         {
             "name": "symfony/event-dispatcher",
@@ -1151,12 +1190,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Process.git",
-                "reference": "8f1f4e4329d3dc9fe08a7106417168145301e49f"
+                "reference": "24aaa0ac728c19170ba4c12663e4cde098c7bac1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Process/zipball/8f1f4e4329d3dc9fe08a7106417168145301e49f",
-                "reference": "8f1f4e4329d3dc9fe08a7106417168145301e49f",
+                "url": "https://api.github.com/repos/symfony/Process/zipball/24aaa0ac728c19170ba4c12663e4cde098c7bac1",
+                "reference": "24aaa0ac728c19170ba4c12663e4cde098c7bac1",
                 "shasum": ""
             },
             "require": {
@@ -1191,7 +1230,7 @@
             "support": {
                 "source": "https://github.com/symfony/Process/tree/master"
             },
-            "time": "2014-08-31 03:28:38"
+            "time": "2014-09-17 09:54:14"
         },
         {
             "name": "twig/twig",
@@ -1199,12 +1238,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/fabpot/Twig.git",
-                "reference": "4134169b67e692107b385af857b526e6013361ce"
+                "reference": "084ca201a737de82323f7613665e7229789aa434"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fabpot/Twig/zipball/4134169b67e692107b385af857b526e6013361ce",
-                "reference": "4134169b67e692107b385af857b526e6013361ce",
+                "url": "https://api.github.com/repos/fabpot/Twig/zipball/084ca201a737de82323f7613665e7229789aa434",
+                "reference": "084ca201a737de82323f7613665e7229789aa434",
                 "shasum": ""
             },
             "require": {
@@ -1252,7 +1291,7 @@
                 "source": "https://github.com/fabpot/Twig/tree/master",
                 "issues": "https://github.com/fabpot/Twig/issues"
             },
-            "time": "2014-07-29 11:54:16"
+            "time": "2014-09-02 14:08:17"
         }
     ],
     "packages-dev": [
@@ -1260,25 +1299,32 @@
     ],
     "aliases": [
         {
-            "alias": "1.0.0",
-            "alias_normalized": "1.0.0.0",
+            "alias": "0.2.1",
+            "alias_normalized": "0.2.1.0",
             "version": "9999999-dev",
-            "package": "composer/composer"
+            "package": "danack/artaxservicebuilder"
+        },
+        {
+            "alias": "0.2.1",
+            "alias_normalized": "0.2.1.0",
+            "version": "9999999-dev",
+            "package": "danack/githubartaxservice"
         },
         {
             "alias": "v1.0.0-alpha",
             "alias_normalized": "1.0.0.0-alpha",
-            "version": "dev-issue-48",
+            "version": "1.0.0.0-beta",
             "package": "rdlowrey/artax"
         }
     ],
     "minimum-stability": "dev",
     "stability-flags": {
-        "bagder/ca-bundle": 20,
         "composer/composer": 20,
         "composer/satis": 20,
-        "rdlowrey/artax": 20
+        "danack/artaxservicebuilder": 20,
+        "danack/githubartaxservice": 20
     },
+    "prefer-stable": false,
     "platform": {
         "php": ">=5.3.2"
     },

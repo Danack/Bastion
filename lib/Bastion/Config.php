@@ -40,6 +40,14 @@ interface Config {
     public function getRestrictionClass();
 
     public function getUploaderClass();
-
-    public function setUploaderClass($uploaderClass);
+    
+    public function getCacheDirectory();
+    
+    public function getRpmList();
+    
+    public function getRPMOutputDirectory();
+    
+    public function getRPMBuildDirectory();
+    
+    public function getTempDirectory();
 }

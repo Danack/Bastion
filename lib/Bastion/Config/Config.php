@@ -8,22 +8,59 @@ use Bastion\BastionException;
 
 class Config implements \Bastion\Config {
 
-    private $zipsDirectory;
+    private $outputDirectory;
+    private $tempDirectory;
+    private $rpmDirectory;
     private $dryRun;
     private $accessToken;
     private $repoList;
+    private $rpmList;
     private $restrictionClass;
     private $bucketName;
     private $s3Key;
     private $s3Secret;
     private $s3Region;
     private $uploaderClass;
+
+
+    /**
+     * Normalize the directory name and make sure it exists.
+     * @param $directory
+     * @return string
+     * @throws BastionException
+     */
+    private function normalizeDirectory($directory) {
+        if (strpos($directory, '/') === 0) {
+            //Absolute path
+            return $directory;
+        }
+
+        //Relative path, correct it to be relative the root directory of this project.
+        $bastionRootPath = dirname(__FILE__).'/../../../';
+        //@TODO - make directory
+        @mkdir($bastionRootPath.$directory);
+        $actualPath = realpath($bastionRootPath.$directory);
+        if (!$actualPath) {
+            throw new BastionException(
+                sprintf(
+                    "Directory `%s` doesn't exist and could not be created.",
+                    $bastionRootPath.$directory
+                )
+            );
+        }
+
+        return $actualPath;
+    }
+
     
     function __construct(
-        $zipsDirectory, 
+        $outputDirectory,
+        $tempDirectory,
+        $rpmDirectory,
         $dryRun, 
         $accessToken, 
-        $repoList, 
+        $repoList,
+        $rpmList,
         $restrictionClass, 
         $bucketName,
         $s3Key,
@@ -32,35 +69,19 @@ class Config implements \Bastion\Config {
         $uploaderClass
     ) {
 
-        if (strpos($zipsDirectory, '/') === 0) {
-            //Absolute path
-            $this->zipsDirectory = $zipsDirectory;
-        }
-        else {
-            //Relative path, correct it to be relative the root directory of this project.
-            $bastionRootPath = dirname(__FILE__).'/../../../';
-            //@TODO - make directory
-            @mkdir($bastionRootPath.$zipsDirectory);
-            $this->zipsDirectory = realpath($bastionRootPath.$zipsDirectory);
-            if (!$this->zipsDirectory) {
-                throw new BastionException(
-                    sprintf(
-                        "zipsDirectory `%s` doesn't exist and could not be created.",
-                        $bastionRootPath.$zipsDirectory
-                    )
-                );
-            }
-        }
-        
-        
+        $this->outputDirectory = $this->normalizeDirectory($outputDirectory);
+        $this->tempDirectory = $this->normalizeDirectory($tempDirectory);
+        $this->rpmDirectory = $this->normalizeDirectory($rpmDirectory);
         $this->dryRun = $dryRun;
         $this->accessToken = $accessToken;
         $this->repoList = $repoList;
+        $this->rpmList = $rpmList;
         $this->restrictionClass = $restrictionClass;
         $this->bucketName = $bucketName;
         $this->s3Key = $s3Key;
         $this->s3Secret = $s3Secret;
         $this->s3Region = $s3Region;
+        $this->uploaderClass = $uploaderClass;
     }
     
     /**
@@ -74,7 +95,7 @@ class Config implements \Bastion\Config {
      * @return string
      */
     public function getOutputDirectory() {
-        return $this->zipsDirectory;
+        return $this->outputDirectory;
     }
 
     /**
@@ -122,8 +143,37 @@ class Config implements \Bastion\Config {
     public function setUploaderClass($uploaderClass) {
         $this->uploaderClass = $uploaderClass;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getRpmList() {
+        return $this->rpmList;
+    }
+
+    /**
+     * @param mixed $rpmList
+     */
+    public function setRpmList($rpmList) {
+        $this->rpmList = $rpmList;
+    }
+
+    public function getCacheDirectory() {
+        return $this->tempDirectory.'/cache';
+    }
     
+    public function getRPMOutputDirectory() {
+        return __DIR__.'/../../../repo';
+    }
     
+    public function getRPMBuildDirectory() {
+        return $this->tempDirectory.'/build';
+    }
+
+    public function getTempDirectory() {
+        return $this->tempDirectory;
+    }
+
     
 }
 

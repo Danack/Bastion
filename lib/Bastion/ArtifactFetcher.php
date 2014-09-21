@@ -5,6 +5,12 @@ namespace Bastion;
 use Composer\Package\Version\VersionParser;
 use GithubService\GithubService;
 
+
+/**
+ * Remove everything before the first digit in a string, if the string contains digits.
+ * @param $text
+ * @return string
+ */
 function subFirstDigit($text) {
     preg_match('/^\D*(?=\d)/', $text, $matches, PREG_OFFSET_CAPTURE);
 
@@ -14,6 +20,8 @@ function subFirstDigit($text) {
 
     return $text;
 }
+
+
 
 class ArtifactFetcher {
 
@@ -73,6 +81,9 @@ class ArtifactFetcher {
         exit(0);
     }
 
+    /**
+     * @param $errorMessage
+     */
     function abortProcess($errorMessage) {
         $this->progress->displayStatus($errorMessage);
     }
@@ -88,6 +99,34 @@ class ArtifactFetcher {
     }
 
     /**
+     * @param $owner
+     * @param $reponame
+     * @return callable
+     */
+    function getProcessRepoTagsCallback($owner, $reponame) {
+        $callback = function(\Exception $error = null, \GithubService\Model\RepoTags $repoTags = null) use($owner, $reponame) {
+
+            if ($error) {
+                $this->progress->displayStatus("Error in addRepoToProcess callback: ".$error->getMessage().'. Exception class is '.get_class($error), 5);
+
+                if ($error instanceof \ArtaxServiceBuilder\BadResponseException) {
+                    var_dump($error->getRequest()->getAllHeaders());
+                    var_dump($error->getRequest()->getBody());
+                }
+
+                $this->abort();
+                return;
+            }
+
+            $this->processRepoTags($owner, $reponame, $repoTags);
+            $this->processShittyPagination($owner, $reponame, $repoTags);
+        };
+
+        return $callback;
+    }
+    
+
+    /**
      * @param $repo
      * @throws BastionException
      */
@@ -99,21 +138,31 @@ class ArtifactFetcher {
 
         $owner = substr($repo, 0, $firstSlashPosition);
         $reponame = substr($repo, $firstSlashPosition + 1);
-        $callback = function(\Exception $error = null, \GithubService\Model\RepoTags $repoTags = null) use($owner, $reponame) {
-            
-            if ($error) {
-                $this->progress->displayStatus("Error in addRepoToProcess callback: ".$error->getMessage(), 5);
-                
-                $this->abort();
-                return;
-            }
-            
-            $this->processRepoTags($owner, $reponame, $repoTags);
-        };
-
+        $callback = $this->getProcessRepoTagsCallback($owner, $reponame);
         $command = $this->githubAPI->listRepoTags($this->config->getAccessToken(), $owner, $reponame);
+
         $command->executeAsync($callback);
     }
+
+    /**
+     * Process Githubs pagination. You would have thought that paging through a resource
+     * would involve modifying page_off, or start_resource - but no, we have to use a different
+     * API call to a straight URL that allegedly contains the paging information.
+     * @param $owner
+     * @param $reponame
+     * @param \GithubService\Model\RepoTags $repoTags
+     */
+    function processShittyPagination($owner, $reponame, \GithubService\Model\RepoTags $repoTags) {
+        if ($repoTags->pager) {
+            $newPages = $repoTags->pager->getAllKnownPages();
+            foreach ($newPages as $pageURL) {
+                $command = $this->githubAPI->listRepoTagsPaginate($this->config->getAccessToken(), $pageURL);
+                $callback = $this->getProcessRepoTagsCallback($owner, $reponame);
+                $command->executeAsync($callback);
+            }
+        }
+    }
+    
 
     /**
      * @param $owner
@@ -323,14 +372,10 @@ class ArtifactFetcher {
      * @throws \Bastion\InvalidComposerFileException If the version entry is already set, but was not parsible by VersionParser
      */
     function ensureValidVersionIsSet($contentsInfo, $version) {
-
         $versionParser = new VersionParser();
-
         $version = subFirstDigit($version);
-        
-        
+
         if (array_key_exists('version', $contentsInfo) == false) {
-            //echo "Adding version tag $version.\n";
             try {
                 $versionParser->normalize($version);
             }
@@ -357,42 +402,4 @@ class ArtifactFetcher {
 }
 
 
-/**
- * @param $filePath
- * @return bool
- * @throws \Exception
- *
- * @TODO - replace this with an atomic version
- */
-function ensureDirectoryExists($filePath) {
-    $pathSegments = array();
 
-    $slashPosition = 0;
-    $finished = false;
-
-    while ($finished === false) {
-        $slashPosition = mb_strpos($filePath, '/', $slashPosition + 1);
-
-        if ($slashPosition === false) {
-            $finished = true;
-        }
-        else {
-            $pathSegments[] = mb_substr($filePath, 0, $slashPosition);
-        }
-    }
-
-    $maxPaths = 20;
-    if (count($pathSegments) > $maxPaths) {
-        throw new \Exception("Trying to create a directory more than $maxPaths deep. What is wrong with you?");
-    }
-
-    foreach ($pathSegments as $segment) {
-        if (file_exists($segment) === false) {
-            $result = mkdir($segment);
-            if ($result == false) {
-                throw new \Exception("Failed to create segment [$segment] in ensureDirectoryExists($filePath).");
-            }
-        }
-    }
-    return true;
-}

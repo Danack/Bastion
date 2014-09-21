@@ -11,4 +11,11 @@ interface S3ACLGenerator {
      * @return string
      */
     function generateConditionBlock();
-} 
+}
+
+//$acp = AcpBuilder::newInstance()
+//    ->setOwner($myOwnerId)
+//    ->addGrantForEmail('READ', 'test@example.com')
+//    ->addGrantForUser('FULL_CONTROL', 'user-id')
+//    ->addGrantForGroup('READ', Group::AUTHENTICATED_USERS)
+//    ->build();

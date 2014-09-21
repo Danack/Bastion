@@ -11,16 +11,19 @@ class SpecBuilder {
     private $buildConfig;
     /** @var RPMProjectConfig  */
     private $projectConfig;
-
     private $filesMacro = '';
     private $buildScript = '';
     private $installDir;
-    
     private $buildDir;
-    
     private $specFilename = 'intahwebz';
-    
 
+
+    /**
+     * @param RPMBuildConfig $buildConfig
+     * @param RPMProjectConfig $projectConfig
+     * @param $buildDir
+     * @throws RPMConfigException
+     */
     function __construct(RPMBuildConfig $buildConfig, RPMProjectConfig $projectConfig, $buildDir) {
         $buildConfig->checkData();
         $projectConfig->checkData();
@@ -34,7 +37,6 @@ class SpecBuilder {
         }
 
         $this->buildDir .= '/';
-        
         //cloning prevents mutability
         $this->buildConfig = clone $buildConfig;
         $this->projectConfig = clone $projectConfig;
@@ -48,11 +50,16 @@ class SpecBuilder {
         );
     }
 
+    /**
+     * Add the install file to the list of files macro, and also copy them into 
+     * the build dir.
+     */
     private function addInstallFiles() {
         foreach ($this->buildConfig->getRPMInstallFiles() as $file) {
             $src = $file->getSourceFilename();
             $dest = $file->getDestFilename();
             $dirname = dirname($dest);
+            $this->buildScript .= "echo 'Adding install files\n';".PHP_EOL;
             $this->buildScript .= "mkdir -p \$RPM_BUILD_ROOT/$dirname\n";
             $this->buildScript .= "cp \$RPM_BUILD_DIR/$src \$RPM_BUILD_ROOT/$dest \n";
             //todo - adjust attr
@@ -60,20 +67,27 @@ class SpecBuilder {
         }
     }
 
-
+    /**
+     * Add any calls to post build scripts.
+     */
     private function addPostBuildScripts() {
+        $this->buildScript .= "echo 'addPostBuildScripts\n';".PHP_EOL;
         foreach ($this->buildConfig->getScripts() as $script) {
+            echo "Adding script: $script".PHP_EOL;
+            $this->buildScript .= "echo 'Running script: ".addslashes($script)."\n';".PHP_EOL;
             $this->buildScript .=  $script."\n";
         }
     }
 
 
     /**
-     * 
+     * Process the crontab entries. Copy them to the crond.d directory 
+     * and list them in the files macro.
      */
     private function processCrontab() {
         $crontabFiles = $this->buildConfig->getCrontabFiles();
         if (count($crontabFiles)) {
+            $this->buildScript .= "echo 'processCrontab\n';".PHP_EOL;
             $this->buildScript .= "mkdir -p \$RPM_BUILD_ROOT/etc/crond.d\n";
         }
 
@@ -85,9 +99,11 @@ class SpecBuilder {
     }
 
     /**
-     * 
+     * Add commands to create data directories, and add list them in the
+     * files macro.
      */
     function addDataDirectories() {
+        $this->buildScript .= "echo 'addDataDirectories\n';".PHP_EOL;
         foreach ($this->buildConfig->getRPMDataDirectories() as $rpmDataDirectory) {
             $modeString = "-";
             $mode = $rpmDataDirectory->getMode();
@@ -113,7 +129,8 @@ class SpecBuilder {
     }
 
     /**
-     * 
+     * Add the source directories. Copies them to the build directory
+     * and lists them in the files macro.
      */
     function addSourceDirectories() {
         foreach ($this->buildConfig->getSourceDirectories() as $srcDirectory) {
@@ -123,6 +140,7 @@ class SpecBuilder {
                 $srcDirectory
             );
 
+            $this->buildScript .= "echo 'addSourceDirectories\n';".PHP_EOL;
             $this->buildScript .= sprintf(
                 "mkdir -p \$RPM_BUILD_ROOT/%s/%s \n",
                 $this->projectConfig->getInstallDir(),
@@ -139,9 +157,11 @@ class SpecBuilder {
     }
 
     /**
-     * 
+     * Add the individual source files. Copies them to the build directory
+     * and lists them in the files macro.
      */
     function addSourceFiles() {
+        $this->buildScript .= "echo 'addSourceFiles\n';".PHP_EOL;
         foreach ($this->buildConfig->getSourceFiles() as $srcFile) {
             $this->filesMacro .= sprintf(
                 "%s/%s\n",
@@ -165,38 +185,10 @@ class SpecBuilder {
      */
     function copyPackageToBuild($sourceDirectory) {
         $destDirectory = $this->buildDir.'BUILD';
-        $this->copyDirectory($sourceDirectory, $destDirectory);
-    }
-     
-    function copyDirectory($sourceDirectory, $destDirectory) {
-        $files = scandir($sourceDirectory);
-        $source = $sourceDirectory."/";
-        $destination = $destDirectory."/";
-
-        foreach ($files as $file) {
-            if (in_array($file, array(".",".."))) {
-                continue;
-            }
-
-            $sourceFilename = $source.$file;
-            $destFilename = $destination.$file;
-            
-            if (is_dir($sourceFilename) == true) {
-//                echo $file.PHP_EOL;
-                @mkdir($destFilename, 0755, true);
-                $this->copyDirectory($sourceFilename, $destFilename);
-                continue;
-            }
-
-            if (!@copy($sourceFilename, $destFilename)) {
-                throw new BastionException(
-                    "Failed to copy file from $sourceFilename to $destFilename"
-                );
-            }
-        }
+        \Bastion\copyDirectory($sourceDirectory, $destDirectory);
     }
 
-
+   
     /**
      * Generates the spec file and prepares the required directories.
      * @param $sourceDirectory
@@ -254,7 +246,6 @@ class SpecBuilder {
         if ($license = $this->projectConfig->getLicense()) {
             //@TODO - get from project config
             $licenseString = "License: $license)";
-            
         }
 
         $fullDescription = $this->projectConfig->getFullDescription();
@@ -328,6 +319,7 @@ END;
     }
 
     /**
+     * Runs the rpmbuild command.
      * @throws BastionException
      */
     function run() {
@@ -362,7 +354,7 @@ END;
         foreach ($filePatterns as $sourcePattern => $destDirectory) {
             $files = glob($sourcePattern);
             var_dump($files);
-            
+
             echo "Need to copy to ".$repoDirectory.'/'.$destDirectory;
             exit(0);
         }

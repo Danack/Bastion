@@ -43,8 +43,7 @@ class Progress {
         //$this->render();
         echo $text.PHP_EOL;
     }
-
-
+    
 
     function nextWatcherID() {
         $return = $this->watcherID;
@@ -84,10 +83,10 @@ class Progress {
 
         if (isset($update['fraction_complete'])) {
             $percentComplete = intval(100 * $update['fraction_complete']);
-            echo $watcherID.' '.$percentComplete.'% '.$update['request_state'].' '.time().' '.$uri.PHP_EOL;
+//            echo $watcherID.' '.$percentComplete.'% '.$update['request_state'].' '.time().' '.$uri.PHP_EOL;
         }
         else {
-            echo $watcherID.' '.$update['bytes_rcvd'].' bytes '.$update['request_state'].' '.time().' '.$uri.PHP_EOL;
+  //          echo $watcherID.' '.$update['bytes_rcvd'].' bytes '.$update['request_state'].' '.time().' '.$uri.PHP_EOL;
         }
         
     }

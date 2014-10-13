@@ -1,0 +1,26 @@
+language: php
+
+php:
+  - 5.6
+  - 5.5
+  - 5.4
+  - hhvm
+
+env:
+  - secure: "fw1FM3JP75tN+YH8/xnK2FtYu+hIcVjV6cngA6pAX3ZQAwgCsF+VCqoXg0kZJo4uuyH4Gqu3yukceUSdQwNbnp2eg70YDaTvI1LcUMycVBQnkP0ZGp7MrsP2ECjhhGYwJxYDauWuhWuzKWVi6mrezPRyR7jpzpnaE0/7El/dfYU="
+
+before_script:
+  - composer install
+  
+script: echo "testing travis"
+
+
+notifications:
+  email:
+    recipients:
+      - Danack+travis@BaseReality.com
+#    on_success: [always|never|change] # default: change
+#    on_failure: [always|never|change] # default: always
+
+
+

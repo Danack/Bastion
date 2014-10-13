@@ -1,0 +1,47 @@
+#!/usr/bin/env php
+<?php
+
+use Danack\Console\Output\BufferedOutput;
+
+if (!ini_get('allow_url_fopen')) {
+    echo "allow_url_fopen is not enabled, things will probably break.";
+}
+
+require __DIR__.'/../src/bootstrap.php';
+
+
+$console = createConsole();
+
+//Figure out what Command was requested.
+try {
+    $parsedCommand = $console->parseCommandLine();
+}
+catch(\Exception $e) {
+    //@TODO change to just catch parseException when that's implemented 
+    $output = new BufferedOutput();
+    $console->renderException($e, $output);
+    echo $output->fetch();
+    exit(-1);
+}
+
+
+//Run the command requested, or the help callable if no command was input
+try {
+    $config = getConfigOrGenerate($parsedCommand->getInput(), $parsedCommand->getOutput(), $console);
+    $injector = createInjector($config);
+    $injector->execute(
+        $parsedCommand->getCallable(),
+        formatKeyNames($parsedCommand->getParams())
+    );
+}
+catch(\Bastion\BastionException $be) {
+    echo "Error running Bastion: ".$be->getMessage().PHP_EOL;
+    exit(-1);
+}
+catch(\Exception $e) {
+    echo "Unexpected exception of type ".get_class($e)." running Bastion: ".$e->getMessage().PHP_EOL;
+    echo $e->getTraceAsString();
+    exit(-2);
+}
+
+

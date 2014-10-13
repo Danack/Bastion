@@ -105,12 +105,16 @@ class S3Sync implements Uploader {
      */
     function finishProcessing() {
         $allowCondition = $this->s3ACLGenerator->generateConditionBlock();
+
+        //"Sid": "Stmt1392421295029",
+
+        $policyNumber = uniqid("", true);
+        
         //@TODO - aren't those numbers meant to be unique?
         $policy = '{
-            "Id": "Policy1392421300612",
+            "Id": "PolicyS3'.$policyNumber.'",
             "Statement": [
                 {
-                    "Sid": "Stmt1392421295029",
                     "Action": [
                         "s3:GetObject"
                     ],

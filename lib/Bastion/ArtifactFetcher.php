@@ -4,6 +4,8 @@ namespace Bastion;
 
 use Composer\Package\Version\VersionParser;
 use GithubService\GithubService;
+use Artax\Request;
+use Artax\Response;
 
 
 /**
@@ -50,6 +52,12 @@ class ArtifactFetcher {
      */
     private $progress;
     
+    /** @var Array of uris that have already been/or are being procesed. Used
+     *  to prevent crappy pagination from make the same resources being downloaded 
+     * multiple times. 
+     */
+    private $processedURIs = array();
+    
     
     function __construct(
         GithubService $githubAPI,
@@ -88,6 +96,46 @@ class ArtifactFetcher {
         $this->progress->displayStatus($errorMessage);
     }
 
+
+    /**
+     * @param \Exception $error
+     * @param Response $response
+     */
+    function processErrorResponse($action, \Exception $error, Response $response) {
+        
+        $status = $response->getStatus();
+        $errorMessage = false;
+        
+        switch($status) {
+
+            case (404): {
+                $errorMessage = "404 during $action. This either means the repo doesn't exist or you don't have permission to access it. Github give 404 for un-authorized access valid resources to prevent information leakage.";
+                break;
+            }
+        }
+
+        if ($errorMessage == true) {
+            $this->progress->displayStatus($errorMessage, 5);
+        }
+        else {
+            $this->progress->displayStatus("Unknown error in addRepoToProcess callback: ".$error->getMessage(
+                ).'. Exception class is '.get_class($error), 5
+            );
+
+            if ($error instanceof \ArtaxServiceBuilder\BadResponseException) {
+                var_dump($error->getRequest()->getAllHeaders());
+                var_dump($error->getRequest()->getBody());
+            }
+
+            if ($response) {
+                var_dump($response);
+            }
+        }
+
+
+        return true;
+    }
+
     /**
      * @param $repos
      * @throws BastionException
@@ -97,6 +145,18 @@ class ArtifactFetcher {
             $this->addRepoToProcess($repo);
         }
     }
+    
+    private function alreadyProcessed(Request $request) {
+        $uri = $request->getUri();
+        if (array_key_exists($uri, $this->processedURIs) == true) {
+            return true;
+        }
+
+        $this->processedURIs[$uri] = true;
+
+        return false;
+    }
+    
 
     /**
      * @param $owner
@@ -104,16 +164,13 @@ class ArtifactFetcher {
      * @return callable
      */
     function getProcessRepoTagsCallback($owner, $reponame) {
-        $callback = function(\Exception $error = null, \GithubService\Model\RepoTags $repoTags = null) use($owner, $reponame) {
+        $callback = function(
+            \Exception $error = null, 
+            \GithubService\Model\RepoTags $repoTags = null,
+            \Artax\Response $response) use($owner, $reponame) {
 
             if ($error) {
-                $this->progress->displayStatus("Error in addRepoToProcess callback: ".$error->getMessage().'. Exception class is '.get_class($error), 5);
-
-                if ($error instanceof \ArtaxServiceBuilder\BadResponseException) {
-                    var_dump($error->getRequest()->getAllHeaders());
-                    var_dump($error->getRequest()->getBody());
-                }
-
+                $this->processErrorResponse("Fetching repo tags for ".$owner."/".$reponame, $error, $response);
                 $this->abort();
                 return;
             }
@@ -141,7 +198,13 @@ class ArtifactFetcher {
         $callback = $this->getProcessRepoTagsCallback($owner, $reponame);
         $command = $this->githubAPI->listRepoTags($this->config->getAccessToken(), $owner, $reponame);
 
-        $command->executeAsync($callback);
+        $request = $command->createRequest();
+        
+        if ($this->alreadyProcessed($request) == true) {
+            return;
+        }
+
+        $command->dispatchAsync($request, $callback);
     }
 
     /**
@@ -158,7 +221,14 @@ class ArtifactFetcher {
             foreach ($newPages as $pageURL) {
                 $command = $this->githubAPI->listRepoTagsPaginate($this->config->getAccessToken(), $pageURL);
                 $callback = $this->getProcessRepoTagsCallback($owner, $reponame);
-                $command->executeAsync($callback);
+
+                $request = $command->createRequest();
+
+                if ($this->alreadyProcessed($request) == true) {
+                    return;
+                }
+
+                $command->dispatchAsync($request, $callback);
             }
         }
     }

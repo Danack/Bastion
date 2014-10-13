@@ -1,29 +1,27 @@
 <?php
 
 use Aws\S3\S3Client;
-use Bastion\ArtifactFetcher;
+
+use Danack\Console\Application;
+use Danack\Console\Helper\QuestionHelper;
 use Artax\Client as ArtaxClient;
 use Alert\Reactor;
 use Alert\ReactorFactory;
-use ConsoleKit\Console;
-use ConsoleKit\Widgets\Dialog;
-
 use Bastion\Config;
 use Bastion\Uploader;
 use Bastion\BastionException;
-use Bastion\RPM\RPMProjectConfig;
-use Bastion\RPM\BuildConfigProvider;
-use Bastion\RPM\RPMConfigException;
-use Bastion\RPM\SpecBuilder;
-
-use Composer\Json\JsonValidationException;
-use Composer\Console\Application as ComposerApplication;
-use Symfony\Component\Console\Input\ArrayInput;
-
+use Composer\Satis\Console\Application as SatisApplication;
 use Artax\Cookie\CookieJar;
 use Artax\HttpSocketPool;
 use Acesync\Encryptor;
 use Artax\WriterFactory;
+use Bastion\ArtifactFetcher;
+use Danack\Console\Input\InputInterface;
+use Danack\Console\Output\OutputInterface;
+use Bastion\BastionArtaxClient;
+use Danack\Console\Command\Command;
+use Danack\Console\Input\InputArgument;
+
 
 
 require_once(realpath(__DIR__).'/../vendor/autoload.php');
@@ -31,411 +29,24 @@ require_once(realpath(__DIR__).'/../vendor/autoload.php');
 define('CONFIG_FILE_NAME', 'bastionConfig.php');
 
 
-/**
- * Class DebugAsyncClient
- */
-class DebugClient extends ArtaxClient {
-
-    private $progressDisplay;
-    
-    public function __construct(
-        \Bastion\Progress $progressDisplay,
-        Reactor $reactor = null,
-        CookieJar $cookieJar = null,
-        HttpSocketPool $socketPool = null,
-        Encryptor $encryptor = null,
-        WriterFactory $writerFactory = null) {
-        parent::__construct($reactor, $cookieJar, $socketPool, $encryptor, $writerFactory);
-        
-        $this->progressDisplay = $progressDisplay;
+function formatKeyNames($params) {
+    $newParams = [];
+    foreach ($params as $key => $value) {
+        $newParams[':'.$key] = $value;
     }
-    
-    /**
-     * @param $uriOrRequest
-     * @param array $options
-     * @return \After\Promise
-     */
-    public function request($uriOrRequest, array $options = []) {
 
-        $displayText = "Making request: ";
-
-        if (is_string($uriOrRequest)) {
-            $displayText .= "string: ". $uriOrRequest;
-        }
-        else if ($uriOrRequest instanceof \Artax\Request) {
-            $displayText .= "Request uri: ".$uriOrRequest->getUri();
-            //echo "\n".toCurl($uriOrRequest);
-        }
-        else {
-            $displayText .= "class ".get_class($uriOrRequest);
-        }
-        
-        $this->progressDisplay->displayStatus($displayText, 1);
-
-        $watchCallback = $this->progressDisplay->getWatcher($uriOrRequest);
-        $promise = parent::request($uriOrRequest);
-        $progress = new \Artax\Progress($watchCallback);
-        $promise->watch($progress);
-        
-        return $promise;
-    }
+    return $newParams;
 }
 
 
 /**
- * @param $configDirectory
- * @param $token
- * @param $zipsDirectory
- */
-function writeConfig(
-    $configDirectory, 
-    $token,
-    $zipsDirectory,
-    $s3Key,
-    $s3Secret,
-    $s3Region,
-    $domainName,
-    $uploaderClass,
-    $restrictionClass
-    ) {
-    $filename = realpath(__DIR__).'/../'.$configDirectory.'/'.CONFIG_FILE_NAME;
-
-    $tokenString = 'null';
-    if ($token) {
-        $tokenString = "'$token'";
-    }
-    
-    $configBody = <<< END
-<?php
-
-// The directory the zip files will be downloaded to and where the
-// Satis repo files will be generated.
-\$zipsDirectory = '$zipsDirectory';
-
-// The Github access token. Technically Bastion can work without this being set,
-// however the Github has a much lower rate limit for unsigned requests.
-\$githubAccessToken = $tokenString;
-
-// The S3 key - used if the S3 uploader is enabled
-\$s3Key = '$s3Key';
-
-// The S3 secret - used if the S3 uploader is enabled
-\$s3Secret = '$s3Secret';
-
-// The S3 region the bucket will be created in if it doesn't already exist. Note
-// buckets cannot be moved once created.
-\$s3Region = '$s3Region';
-\$domainName = '$domainName';
-
-// Uploader class should be one of 
-// null - skip uploading
-// 'Bastion\S3Sync' - the included S3 uploader.
-// alternative you can specify any class that implements the 
-// Bastion\Uploader interface if you want to add your own.
-\$uploaderClass = '$uploaderClass';
-
-//If S3 is chosen as the uploader, the restriction class will be
-//applied to restrict who can access the files
-\$restrictionClass = '$restrictionClass';
-
-//The list of github repos that you want your Bastion repo to provide.
-//They should be listed as the Github "owner/repo" not the packagist name
-\$repoList = [
-    //"Behat/Mink",
-];
-
-//The config file must return a config object.
-return new Config(
-    \$zipsDirectory, \$dryRun, 
-    \$githubAccessToken, \$repoList, 
-    \$restrictionClass, \$bucketName,
-    \$s3Key, \$s3Secret,
-    \$s3Region,
-    \$uploaderClass
-);
-    
-
-END;
-
-    $written = file_put_contents($filename, $configBody);
-    
-    if ($written === false) {
-        echo "Failed config to filename $filename ".PHP_EOL;
-        exit(0);
-    }
-
-    $filename = realpath($filename);
-    
-    echo "Config file created. Please edit $filename to put your required repos in \$repoList".PHP_EOL;
-}
-
-
-/**
- * @param Dialog $dialog
- * @return bool|string
- */
-function askForRegion(Dialog $dialog) {
-    
-    $regions = [
-        'us-east-1',
-        'us-west-1',
-        'us-west-2',
-        'eu-west-1',
-        'ap-northeast-1',
-        'ap-southeast-1',
-        'ap-southeast-2',
-        'sa-east-1',
-        'cn-north-1',
-        'us-gov-west-1',
-    ];
-
-    echo "Please choose a region for the S3 bucket to be create in. This only has any effect if the bucket doesn't already exist.".PHP_EOL;
-    
-    $count = 1;
-    $regionOptions = [];
-    foreach ($regions as $region) {
-        echo "$count:) $region".PHP_EOL;
-        
-        $regionOptions[] = "".$count."";
-        $count++;
-    }
-
-    $regionOption = $dialog->option(
-        'Please enter a digit',
-        $regionOptions,
-        'p',
-        "Please enter a digit that corresponds to one of the regions listed."
-    );
-    
-    return $regionOption; 
-}
-
-/**
- * @param Dialog $dialog
- * @return null|string
- */
-function askForS3Key(Dialog $dialog) {
-    echo "Please enter the AWS key for S3 to be able to upload files.".PHP_EOL;
-
-    $enteredS3Token = $dialog->ask('Please enter your S3 token:');
-    if (strlen(trim($enteredS3Token)) < 8) {
-        echo "That doesn't look like a token dude.".PHP_EOL;
-    }
-    else {
-        return $enteredS3Token;
-    }
-
-    return null;
-}
-
-
-/**
- * @param Dialog $dialogue
- * @return null
- */
-function askForS3Secret(Dialog $dialog) {
-    echo "Please enter the AWS secret for S3 to be able to upload files.".PHP_EOL;
-
-    while (true) {
-        $enteredS3Token = $dialog->ask('Please enter your S3 secret:');
-        if (strlen(trim($enteredS3Token)) < 8) {
-            echo "That doesn't look like a secret dude.".PHP_EOL;
-        }
-        else {
-            return $enteredS3Token;
-        }
-    };
-}
-
-/**
- * @param Dialog $dialogue
- * @return string
- */
-function askForDomainName(Dialog $dialog) {
-    $enteredDomain = $dialog->ask('Please enter your domain name:');
-    if (strlen(trim($enteredDomain)) > 0) {
-        return trim($enteredDomain);
-    }
-}
-
-/**
- * @param Dialog $dialogue
- * @return string
- */
-function askForBucketName(Dialog $dialog) {
-    $enteredDomain = $dialog->ask('Please enter the bucket name:');
-    if (strlen(trim($enteredDomain)) > 0) {
-        return trim($enteredDomain);
-    }
-}
-
-
-
-
-/**
- * @param Dialog $dialog
- * @return string
- */
-function askForConfigDirectory(Dialog $dialog) {
-    $configLocationOptions = ['c', 'p'];
-    //Config directory - this one or above.
-    $directoryOption = $dialog->option(
-        'Config file location (c)urrent directory or (p)arent directory?',
-        $configLocationOptions,
-        'p'
-    );
-
-    if ($directoryOption === 'c') {
-        $configDirectory = './';
-    }
-    else {
-        $configDirectory = '../';
-    }
-    
-    return $configDirectory;
-}
-
-
-/**
- * @param Dialog $dialog
- * @return null|string
- */
-function askForOauthToken(Dialog $dialog) {
-
-    echo "Bastion runs best with an Oauth token. Without one you will be rate limited by Github and be unable to access private repos.".PHP_EOL;
-
-    echo "You can setup an oauth token by going to https://github.com/settings/tokens/new Please enable 'repo' scope to have access to private repos, otherwise select no scopes to just avoid rate-limiting.".PHP_EOL;
-//    echo "If you want Bastion to be able to access private repositories, you need to enable the 'repo' scope. If you only have public repos, you can select no scopes to avoid the rate-limiting without giving Bastion any permissions.".PHP_EOL;
-
-    $oauthTokenOptions = ['h', 'n'];
-
-    $option = $dialog->option(
-        "Do you (h)ave a token, or want to setup with (n)o token. You can always just enter the token in the config file later.",
-        $oauthTokenOptions,
-        'h'
-    );
-
-    $token = null;
-
-    if ($option === 'h') {
-        while ($token == null) {
-            $enteredToken = $dialog->ask('Please enter your token:');
-            if (strlen(trim($enteredToken)) < 8) {
-                echo "That doesn't look like a token dude.";
-            }
-            else {
-                //echo "Checking token ".PHP_EOL;
-                //$token = $enteredToken;
-                return $enteredToken;
-            }
-        };
-    }
-    else {
-        echo "Setting up with no token. Downloads will be rate limited and private repos unavailable.".PHP_EOL;
-    }
-
-    return null;
-}
-
-
-/**
- * @param Dialogue $dialog
- * @return mixed
- */
-function askToSelectUploader(Dialog $dialog) {
-    echo "Bastion can upload the artifacts and Satis file to make them available from a server. Please choose an uploader option:".PHP_EOL;
-
-    $uploaderOptions = ['n', 's'];
-
-    $dialogText = 's - Amazon S3'.PHP_EOL;
-    $dialogText .= 'n - None, packages will only be available locally.'.PHP_EOL;
-    
-    $uploaderOptionChosen = $dialog->option(
-        $dialogText ,
-        $uploaderOptions,
-        'X'
-    );
-    
-    $uploaderOptionClasses = [
-        'n' => null,
-        's' => 'Bastion\S3Sync'
-    ];
-
-    if (!array_key_exists('n', $uploaderOptionClasses)) {
-        echo "Option chosen `$uploaderOptionChosen` is not listed in uploaderOptionClass";
-        exit(0);
-    }
-    
-    return $uploaderOptionClasses[$uploaderOptionChosen];
-}
-
-function askToSelectRestriction(Dialog $dialog) {
-    echo "Please select an ACL generator. This allows you to tell S3 who can access the files:".PHP_EOL;
-
-    $restrictOptions = ['n', 'i'];
-
-    $dialogText = 'i - Restrict by IP'.PHP_EOL;
-    $dialogText = 'n - None, S3 will not apply any ACL check.'.PHP_EOL;
-
-    $restrictOptionChosen = $dialog->option(
-        $dialogText ,
-        $restrictOptions,
-        'X'
-    );
-
-    $restrictOptionClass = [
-        'n' => '\Bastion\S3ACLNoRestrictionGenerator',
-        'i' => '\Bastion\S3ACLRestrictByIPGenerator'
-    ];
-
-    if (!array_key_exists($restrictOptionChosen, $restrictOptionClass)) {
-        echo "Option chosen `$restrictOptionChosen` is not listed in $restrictOptionClass";
-        exit(0);
-    }
-    
-    return $restrictOptionClass[$restrictOptionChosen];
-}
-
-/**
- * @param Console $console
- * @return null
- */
-function generateConfig(Console $console) {
-
-    $region = null;
-    $s3Key = null;
-    $s3Secret = null;
-    $restrictionClass = 'Bastion\S3ACLRestrictByIPGenerator';
-
-    $dialog = new ConsoleKit\Widgets\Dialog($console);
-    $configDirectory = askForConfigDirectory($dialog);
-    $token = askForOauthToken($dialog);
-    
-    $uploaderClass = askToSelectUploader($dialog);
-
-    if ($uploaderClass == 'Bastion\S3Sync') {
-        $region = askForRegion($dialog);
-        $s3Key = askForS3Key($dialog);
-        $s3Secret = askForS3Secret($dialog);
-        $restrictionClass = askToSelectRestriction($dialog);
-
-        $domainName = askForBucketName($dialog);
-    }
-
-    $domainName = askForDomainName($dialog);
-    $zipsDirectory = "./zipsOutput";
-    writeConfig($configDirectory, $token, $zipsDirectory, $s3Key, $s3Secret, $region, $domainName, $uploaderClass, $restrictionClass);
-    
-    return null;
-}
-
-
-
-/**
+ * Read the config file from either the level above the root directory, or the root
+ * directory of Bastion.
+ * I strongly recommend not putting S3 keys in a place where they can accidentally 
+ * be committed to a repo.
  * @return \Bastion\Config\Config
  */
 function getConfig() {
-
     $configLocations = [
         realpath(__DIR__)."/../../".CONFIG_FILE_NAME, //outside of project
         realpath(__DIR__)."/../".CONFIG_FILE_NAME, //project root
@@ -453,17 +64,77 @@ function getConfig() {
 
 
 /**
+ * Either read the config file, or take the user through a series of
+ * questions to generate the config.
+ * @param InputInterface $input
+ * @param OutputInterface $output
+ */
+function getConfigOrGenerate(InputInterface $input, OutputInterface $output, Application $console) {
+    
+    $logo = <<< END
+______              _    _               
+| ___ \            | |  (_)              
+| |_/ /  __ _  ___ | |_  _   ___   _ __  
+| ___ \ / _` |/ __|| __|| | / _ \ | '_ \ 
+| |_/ /| (_| |\__ \| |_ | || (_) || | | |
+\____/  \__,_||___/ \__||_| \___/ |_| |_|
+                                         
+                                         
+
+END;
+    
+    
+    $config = getConfig();
+    if ($config == null) {
+
+        $output->writeln();
+
+        $questionHelper = new QuestionHelper();
+        $questionHelper->setHelperSet($console->getHelperSet());
+        $configGenerator = new Bastion\Config\DialogueGenerator($input, $output, $questionHelper);
+        
+        $configGenerator->generateConfig();
+
+        try {
+            $config = getConfig();
+        }
+        catch (\Exception $e) {
+            echo "Generated config throws an exception: ".$e->getMessage();
+            exit(0);
+        }
+    }
+    
+    return $config;
+}
+
+
+
+
+
+/**
+ * Get all of the artifacts (packages) that are listed in the config, modify the 
+ * composer.json file in them to include the version number so that they can be understand by Satis.
+ * Also generate the input file Satis needs to be able to run.
  * @param $listOfRepositories
  * @param Config $config
  */
-//function getArtifacts($ignoreList, $usingList,  Config $config) {
+function getArtifacts(
+    Bastion\Config $config,
+    ArtifactFetcher $artifactFetcher,
+    Reactor $reactor, $satisFilename) {
 
-function getArtifacts(ArtifactFetcher $artifactFetcher, Reactor $reactor, $listOfRepositories) {
+    if (count($config->getRepoList()) == 0) {
+        echo "Repo list is empty - nothing to process. Please list some ";
+        return;
+    }
+
     $artifactFetcher->downloadZipArtifacts(
-        $listOfRepositories
+        $config->getRepoList()
     );
     
     $reactor->run();
+
+    writeSatisJsonFile($satisFilename, $config);
 }
 
 /**
@@ -493,6 +164,12 @@ function fixPaths($outputDirectory, $siteURL) {
 }
 
 
+/**
+ * Satis does not generate path names correctly, so we fix them.
+ * @param $filename
+ * @param $absolutePath
+ * @param $siteURL
+ */
 function fixPathsInFile($filename, $absolutePath, $siteURL) {
     $text = @file_get_contents($filename);
 
@@ -521,6 +198,8 @@ function syncArtifactBuild(Config $config, Uploader $uploader) {
 
 
 /**
+ * Debug method for converting an \Artax\Request to a curl 
+ * command line request. 
  * @param \Artax\Request $request
  * @return string
  */
@@ -546,8 +225,25 @@ function toCurl(Artax\Request $request) {
 }
 
 
-function createS3Client(Config $config) {
 
+/**
+ * @param $filePath
+ * @return bool
+ * @throws \Exception
+ */
+function ensureDirectoryExists($filePath) {
+    $directoryName = dirname($filePath);
+    @mkdir($directoryName, 0755, true);
+
+    return file_exists($directoryName);
+}
+
+/**
+ * Delegate function for creating an S3Client object
+ * @param Config $config
+ * @return S3Client
+ */
+function createS3Client(Config $config) {
     if (strlen($config->getS3Key()) == 0) {
         echo "S3Key is zero length - S3 upload unlikely to work.";
     }
@@ -573,31 +269,45 @@ function createS3Client(Config $config) {
 
 
 /**
+ * Create the injector - this is the heart of where the application turns the 
+ * configuration into an actual usable DIC.
  * @param Config $config
  * @return \Auryn\Provider
  */
 function createInjector(Config $config) {
     $injector = new \Auryn\Provider();
-    $injector->alias('Bastion\Config', get_class($config));
-
-    $injector->alias(
-        'ArtaxServiceBuilder\ResponseCache',
-        'ArtaxServiceBuilder\ResponseCache\FileResponseCache'
-    );
     
-    $injector->share($config);
-    $injector->alias(
-        'GithubService\GithubService',
-        'GithubService\GithubArtaxService\GithubArtaxService'
-    );
+    $classAliases = [
+        'Bastion\Config' => get_class($config),
+        'ArtaxServiceBuilder\ResponseCache' => 'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
+        'GithubService\GithubService' => 'GithubService\GithubArtaxService\GithubArtaxService',
+        'Bastion\RepoInfo' => 'Bastion\FileStoredRepoInfo',
+        'Bastion\RPM\BuildConfigProvider' => 'Bastion\RPM\RootFileBuildConfigProvider',
+    ];
 
-    $injector->define('Bastion\S3ACLRestrictByIPGenerator', [':allowedIPAddresses' => []]);
-    $injector->alias('Bastion\S3ACLGenerator', $config->getRestrictionClass());
-
+    if ($aclGeneratorClass = $config->getRestrictionClass()) {
+        $classAliases['Bastion\S3ACLGenerator'] = $aclGeneratorClass;
+    }
+    
     if ($uploaderClass = $config->getUploaderClass()) {
-        $injector->alias('Bastion\Uploader', 'Bastion\S3Sync');
+        $classAliases['Bastion\Uploader'] = 'Bastion\S3Sync';
     }
 
+    
+    foreach ($classAliases as $class => $alias) {
+        $injector->alias($class, $alias);
+    }
+
+    //Share all the classes that should only be singletons
+    $injector->share($config);
+    $injector->share('Bastion\RepoInfo');
+    $injector->share('Alert\Reactor');
+    $injector->share('Bastion\Progress');
+    $injector->share('Artax\Client');
+
+    //Define scalar values
+    $injector->define('Bastion\S3ACLRestrictByIPGenerator', [':allowedIPAddresses' => []]);
+    $injector->define('Bastion\S3Sync', [':bucket' => $config->getBucketName()]);
     $injector->define(
         'Bastion\FileStoredRepoInfo',
         [
@@ -605,10 +315,21 @@ function createInjector(Config $config) {
             ':usingListFilename' => realpath(__DIR__)."/../usingList.txt"
         ]
     );
-    $injector->share('Bastion\RepoInfo');
-    $injector->alias('Bastion\RepoInfo', 'Bastion\FileStoredRepoInfo');
+    $injector->define(
+        'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
+        [':cacheDirectory' => $config->getCacheDirectory()]
+    );
+    $injector->define(
+        'GithubService\GithubArtaxService\GithubArtaxService',
+        [':userAgent' => "Danack/Bastion"]
+    );
     
-    $injector->share('Alert\Reactor');
+    //Delegate all the things!
+    $injector->delegate('Aws\S3\S3Client', 'createS3Client');
+    $injector->delegate('Alert\Reactor', function() {
+            return (new ReactorFactory)->select();
+    });
+
     $injector->delegate(
         'Bastion\URLFetcher',
         function (\Artax\Client $client) use ($config) {
@@ -616,52 +337,34 @@ function createInjector(Config $config) {
         }
     );
 
-    $injector->share('Bastion\Progress');
-    $injector->delegate('Alert\Reactor', function() {
-            return (new ReactorFactory)->select();
-    });
-
-    $injector->define(
-        'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
-        [':cacheDirectory' => __DIR__.'/../cache']
-    );
-    
-
-//            $asyncClient->setOption('maxconnections', 3);
-//            $asyncClient->setOption('connecttimeout', 10);
-//            $asyncClient->setOption('transfertimeout', 10);
-
-
-    $injector->share('Artax\Client');
     $injector->delegate(
         'Artax\Client',
         function (Alert\Reactor $reactor, \Bastion\Progress $progress) {
-
             //This extends the client, to be able to put a watch on each of the
             //Promises that Artax returns
-            $client = new DebugClient($progress, $reactor); 
+            $client = new BastionArtaxClient($progress, $reactor); 
             $client->setOption(ArtaxClient::OP_MS_KEEP_ALIVE_TIMEOUT, 3);
             $client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 4);
-
+            // This might be a good idea...
+            // $this->client->setOption(\Artax\Parser::OP_MAX_BODY_BYTES, 20 * 1024 * 1024);
             return $client;
         }
     );
 
-    $injector->delegate(
-        'GithubService\GithubArtaxService\GithubArtaxService',
-        function (\Artax\Client $client, \ArtaxServiceBuilder\ResponseCache $responseCache) use ($config) {
-            return new \GithubService\GithubArtaxService\GithubArtaxService($client, $responseCache, "Danack/Bastion");
-        }
-    );
+    $filename = realpath(dirname(__FILE__).'/../');
+    $filename .= '/satis-zips.json';
+    
+    $injector->defineParam('satisFilename', $filename);
 
-    $injector->delegate('Aws\S3\S3Client', 'createS3Client');
-    $injector->define('Bastion\S3Sync', [':bucket' => $config->getBucketName()]);
+    $injector->share($injector); //YOLO service locator
 
     return $injector;
 }
 
 
-
+/**
+ * @throws BastionException
+ */
 function processRemoveList() {
     echo "processRemoveList not implemented yet.";
     return;
@@ -700,16 +403,16 @@ function processRemoveList() {
 }
 
 /**
- * //TODO - shift this to in memory?
+ * Write a satis config file, that just tells Satis where to look for
+ * artifacts.
+ * @TODO - shift this to in memory? We could use 
+ * https://github.com/thornag/php-vfs to remove any 'temp' writing,
+ * but the current system works...so could be overkill.
  * @param Config $config
  */
 function writeSatisJsonFile($filename, Config $config) {
-
     $path = $config->getOutputDirectory();
-    
     $absolutePath = realpath($path).'/packages/';
-    
-
     $text = <<< END
 
 {
@@ -738,176 +441,91 @@ END;
 }
 
 /**
- * @todo This has a race condition
- * @param bool $dir
- * @param string $prefix
- * @return null|string
+ * Run satis to build the site files and description of the packages.
+ * @param Config $config
+ * @param $satisFilename
+ * @throws Exception
  */
-function tempdir($directory, $prefix) {
-    $path = $directory.'/'.$prefix;
-    $path .= '_'.date("Y_m_d_H_i_s").'_'.uniqid();
-    if (file_exists($path)) {
-        throw new \Bastion\BastionException('Path '.$path.' already exists - that seems highly unlikely.');
-    }
+function runSatis(\Bastion\Config $config, $satisFilename) {
+    echo "Finished downloading, running Satis".PHP_EOL;
+    $absolutePath = dirname(realpath($config->getOutputDirectory()));
 
-    @mkdir($path, 0755, true);
-    if (is_dir($path)) {
-        return $path;
-    }
-    return null;
-}
+    $satisApplication = new SatisApplication();
 
-
-
-function runComposerInstall($directory) {
-
-
-    //Create the commands
-    $input = new ArrayInput([
-        'command' => 'install',
-        '--no-dev' => true,
-        '--working-dir' => $directory
+    //Create the command
+    $input = new \Symfony\Component\Console\Input\ArrayInput([
+        'command' => 'build',
+        'file' => $satisFilename,
+        'output-dir' => $absolutePath.'/zipsOutput'
     ]);
 
     //Create the application and run it with the commands
-    $application = new ComposerApplication();
-    $application->setAutoExit(false);
+    $satisApplication->setAutoExit(false);
+    $satisApplication->run($input);
 
-    //if (false) {
-    $result = $application->run($input);
-    //}
-
-    if ($result != 0) {
-        echo "Error running composer, see above.";
-        exit(0);
-    }
-    
+    //Step 3 - fix the broken paths. Satis has a bug 
+    fixPaths($config->getOutputDirectory(), 'http://'.$config->getSiteName());
 }
 
 /**
- * @param $sourceDirectory
- * @return RPMProjectConfig
- * @throws BastionException
+ * Runs all the steps needed to build a bastion repository and upload it
+ * @param \Auryn\Provider $injector
  */
-function readProjectConfig($sourceDirectory) {
-    
-    $projectConfig = new RPMProjectConfig();
-
-    try {
-        $projectConfig->readComposerJsonFile($sourceDirectory.'/composer.json');
-    }
-    catch (JsonValidationException $jve) {
-        echo $jve->getMessage().PHP_EOL;
-        foreach($jve->getErrors() as $error) {
-            echo $error;
-            exit(-1);
-        }
-    }
-    
-    return $projectConfig;
+function runCompleteRepoProcess(\Auryn\Provider $injector) {
+    $injector->execute('getArtifacts');
+    $injector->execute('runSatis');
+    $injector->execute('syncArtifactBuild');
 }
-
 
 /**
- * @param $archiveFilename
- * @param $buildDir
- * @throws BastionException
+ * Creates a console application with all of the commands attached.
+ * @return Application
  */
-function extractZipAndReturnRootDirectory($archiveFilename, $buildDir) {
-    $zip = new ZipArchive;
-    $result = $zip->open($archiveFilename);
+function createConsole() {
+    $rpmCommand = new Command('rpmdir', ['Bastion\RPMProcess', 'packageSingleDirectory']);
+    $rpmCommand->addArgument('directory', InputArgument::REQUIRED, "The directory containing the composer'd project to build into an RPM.");
+//$uploadCommand->addOption('dir', null, InputArgument::OPTIONAL, 'Which directory to upload from', './');
+    $rpmCommand->setDescription("Build an RPM from an directory that contains all the files of a project. Allows for faster testing than having to re-tag, and download zip files repeatedly.");
 
-    if ($result !== true) {
-        echo "Failed to open archive ";
-        exit(-1);
-    }
+    $uploadCommand = new Command('upload', 'syncArtifactBuild');
+    $uploadCommand->setDescription("Uploads all of the files for the satis repository to the upload destination.");
 
-    $result = $zip->extractTo($buildDir);
+    $downloadCommand = new Command('download', 'getArtifacts');
+    $downloadCommand->setDescription("Downloads all of the packages listed as repositories in your config, and processes them ready to be used in a satis repository.");
+
+    $satisCommand = new Command('satis', 'runSatis');
+    $satisCommand->setDescription("Runs satis to build the website files for the satis repository. Does not download or upload files.");
+
+
+    $allCommand = new Command('repo', 'runCompleteRepoProcess');
+    $allCommand->setDescription("Runs the 'download', 'satis' and 'upload' commands, i.e. everything required to build your own satis repository and upload it to a remote site.");
+
+    $console = new Application("Bastion", "1.0.0");
+    $console->add($allCommand);
+    $console->add($rpmCommand);
+    $console->add($uploadCommand);
+    $console->add($downloadCommand);
+    $console->add($satisCommand);
+
     
-    if ($result == false) {
-        throw new \Bastion\BastionException("Failed to extract archive $archiveFilename.");
-    }
-    
-    $entries = glob($buildDir.'/*', GLOB_ONLYDIR);
 
-    if (count($entries) == 0) {
-        throw new \Bastion\BastionException("Archive $archiveFilename did not contain any directories - not a valid archive. ");
-    }
+////Step 0 - bootstrap.
+//$artifactFetcher = $injector->make('Bastion\ArtifactFetcher');
+////$artifactFetcher->processRemoveList($config->getZipsDirectory()."/removeList.txt");
+//$injector->execute(['Bastion\RPMProcess', 'process']);
+//    $params = [
+//        //':sourceDirectory' => "/documents/projects/github/Bastion/Bastion/temp/intahwebz-master"
+//        ':sourceDirectory' => "/home/github/Bastion/Bastion/temp/intahwebz-master"
+//    ];
+//
+//    $injector->execute(['Bastion\RPMProcess', 'packageSingleDirectory'], $params);
 
-    if (count($entries) > 1) {
-        throw new \Bastion\BastionException("Archive $archiveFilename contains ".count($entries)." root directories - not a valid archive. ");
-    }
 
-    foreach ($entries as $entry) {
-        $lastSlashPosition = strrpos($entry, '/');
+//Add Install script 
 
-        if ($lastSlashPosition !== false) {
-            //return substr($entry, $lastSlashPosition + 1);
-            return $entry;
-        }
-    }
+//Finish config file generator
 
-    throw new \Bastion\BastionException("Failed to find root directory of archive $archiveFilename");
+
+
+    return $console;
 }
-
-
-/**
- * @param $artifactFilename
- * @param $buildDir
- * @param $repoDirectory
- * @param $version
- * @throws BastionException
- */
-function rpmArtifact(
-    $artifactFilename,
-    $buildDir,
-    $repoDirectory,
-    $version,
-    BuildConfigProvider $buildConfigProvider) {
-
-    if (true) {
-        $sourceDirectory = extractZipAndReturnRootDirectory(
-            $artifactFilename,
-            $buildDir
-        );
-
-        runComposerInstall($sourceDirectory);
-    }
-    else {
-        $sourceDirectory = "/documents/projects/github/Bastion/Bastion/temp/BuildRPM_2014_09_07_18_40_36_540ca6a4446f0/intahwebz-master";
-    }
-
-    $projectConfig = readProjectConfig($sourceDirectory);
-    $buildConfig = $buildConfigProvider->getBuildConfig($sourceDirectory);
-    $projectConfig->setVersion($version);
-
-    try {
-        $specBuilder = new SpecBuilder($buildConfig, $projectConfig, $buildDir);
-    }
-    catch (RPMConfigException $ce) {
-        echo "Errors detected in config:".PHP_EOL;
-        foreach ($ce->getErrors() as $error) {
-            echo "   ".$error.PHP_EOL;
-        }
-        exit(-1);
-    }
-    
-    
-    $specBuilder->prepareSetupRPM($sourceDirectory);
-    $specBuilder->run();
-    $specBuilder->copyPackagesToRepoDir($repoDirectory);
-    //copy built files to repo
-    //unlink $buildDir
-}
-
-
-$config = getConfig();
-
-if ($config == null) {
-    generateConfig($console);
-    return;
-}
-
-$console = new Console();
-
-$injector = createInjector($config);

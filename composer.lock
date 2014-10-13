@@ -4,20 +4,20 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "8e2f4407046746d4d8458a58668e7705",
+    "hash": "14cdc0180a71c72b5d5070e005b4f928",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
-            "version": "dev-master",
+            "version": "2.6.16",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "af60cdbc21fbe972926ecbcc20030dac36c74623"
+                "reference": "36434f2cd96ea78844478d897fb568a1866bce5a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/af60cdbc21fbe972926ecbcc20030dac36c74623",
-                "reference": "af60cdbc21fbe972926ecbcc20030dac36c74623",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/36434f2cd96ea78844478d897fb568a1866bce5a",
+                "reference": "36434f2cd96ea78844478d897fb568a1866bce5a",
                 "shasum": ""
             },
             "require": {
@@ -49,6 +49,7 @@
                     "Aws": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "Apache-2.0"
             ],
@@ -70,12 +71,7 @@
                 "s3",
                 "sdk"
             ],
-            "support": {
-                "forum": "https://forums.aws.amazon.com/forum.jspa?forumID=80",
-                "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/master"
-            },
-            "time": "2014-09-17 16:02:42"
+            "time": "2014-09-11 22:10:11"
         },
         {
             "name": "composer/composer",
@@ -216,8 +212,14 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "/documents/projects/github/ArtaxServiceBuilder",
-                "reference": "7406ad8ffeca47778dac3cd9018236e18fe38d19"
+                "url": "https://github.com/Danack/ArtaxServiceBuilder.git",
+                "reference": "28363c9b1773df9efcf5ecf7dac9c2923d5dd49e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Danack/ArtaxServiceBuilder/zipball/28363c9b1773df9efcf5ecf7dac9c2923d5dd49e",
+                "reference": "28363c9b1773df9efcf5ecf7dac9c2923d5dd49e",
+                "shasum": ""
             },
             "require": {
                 "danack/danack-code": ">=2.4.4"
@@ -234,20 +236,88 @@
                     "ArtaxServiceBuilder": "src/"
                 }
             },
-            "time": "2014-09-08 11:25:52"
+            "support": {
+                "source": "https://github.com/Danack/ArtaxServiceBuilder/tree/0.2.2",
+                "issues": "https://github.com/Danack/ArtaxServiceBuilder/issues"
+            },
+            "time": "2014-10-12 15:27:49"
         },
         {
-            "name": "danack/console",
-            "version": "dev-master",
+            "name": "danack/auryn",
+            "version": "0.14.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/Danack/Console.git",
-                "reference": "cfbdc2f6767d44c8555e535970edec68110f5435"
+                "url": "https://github.com/Danack/Auryn.git",
+                "reference": "2471c19ecf3f9d4e2a2dfc949430fc290d67270b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Danack/Console/zipball/cfbdc2f6767d44c8555e535970edec68110f5435",
-                "reference": "cfbdc2f6767d44c8555e535970edec68110f5435",
+                "url": "https://api.github.com/repos/Danack/Auryn/zipball/2471c19ecf3f9d4e2a2dfc949430fc290d67270b",
+                "reference": "2471c19ecf3f9d4e2a2dfc949430fc290d67270b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "replace": {
+                "rdlowrey/auryn": "self.version"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "4.0.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Auryn\\": "lib/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Daniel Lowrey",
+                    "email": "rdlowrey@gmail.com",
+                    "role": "Creator / Main Developer"
+                },
+                {
+                    "name": "Levi Morrison",
+                    "email": "levim@php.net",
+                    "homepage": "http://morrisonlevi.github.com/",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Dan Ackroyd",
+                    "email": "Danack@basereality.com",
+                    "homepage": "http://www.basereality.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Auryn is a dependency injector for bootstrapping object-oriented PHP applications.",
+            "homepage": "https://github.com/rdlowrey/Auryn",
+            "keywords": [
+                "dependency injection",
+                "dic",
+                "ioc"
+            ],
+            "support": {
+                "source": "https://github.com/Danack/Auryn/tree/0.14.2",
+                "issues": "https://github.com/Danack/Auryn/issues"
+            },
+            "time": "2014-10-11 00:30:55"
+        },
+        {
+            "name": "danack/console",
+            "version": "v2.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Danack/Console.git",
+                "reference": "c69267bda73a2c896436605e18a9d4ff808d5ef3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Danack/Console/zipball/c69267bda73a2c896436605e18a9d4ff808d5ef3",
+                "reference": "c69267bda73a2c896436605e18a9d4ff808d5ef3",
                 "shasum": ""
             },
             "require": {
@@ -267,37 +337,34 @@
             },
             "autoload": {
                 "psr-0": {
-                    "Symfony\\Component\\Console\\": ""
+                    "Danack\\Console\\": "lib/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
-                    "name": "Danack",
-                    "email": "Danack@basereality.com"
+                    "name": "Symfony Community",
+                    "homepage": "http://symfony.com/contributors"
                 },
                 {
                     "name": "Fabien Potencier",
                     "email": "fabien@symfony.com"
                 },
                 {
-                    "name": "Symfony Community",
-                    "homepage": "http://symfony.com/contributors"
+                    "name": "Danack",
+                    "email": "Danack@basereality.com"
                 }
             ],
             "description": "Refactored Symfony Console Component",
-            "homepage": "http://basereality.com",
+            "homepage": "http://console.basereality.com/",
             "keywords": [
                 "cli",
                 "console"
             ],
-            "support": {
-                "source": "https://github.com/Danack/Console/tree/master",
-                "issues": "https://github.com/Danack/Console/issues"
-            },
-            "time": "2014-09-20 22:11:31"
+            "time": "2014-09-22 17:51:49"
         },
         {
             "name": "danack/danack-code",
@@ -338,7 +405,7 @@
         },
         {
             "name": "danack/danackhttp2",
-            "version": "dev-master",
+            "version": "1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Danack/HTTP2.git",
@@ -359,6 +426,7 @@
                     "HTTP2": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "include-path": [
                 "./"
             ],
@@ -367,16 +435,13 @@
             ],
             "authors": [
                 {
-                    "email": "Danack@basereality.com",
                     "name": "Dan Ackroyd",
+                    "email": "Danack@basereality.com",
+                    "homepage": "http://www.basereality.com",
                     "role": "Developer"
                 }
             ],
             "description": "A fork of HTTP for PHP5 and autoloading",
-            "support": {
-                "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=HTTP2",
-                "source": "https://github.com/Danack/HTTP2"
-            },
             "time": "2014-07-13 21:04:06"
         },
         {
@@ -384,11 +449,17 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "/documents/projects/github/GithubArtaxService",
-                "reference": "5c7e22179984803f961e678ab472ee23d7bb0362"
+                "url": "https://github.com/Danack/GithubArtaxService.git",
+                "reference": "84167f2d755f313b4c80a9ce7637890b0d910bd2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Danack/GithubArtaxService/zipball/84167f2d755f313b4c80a9ce7637890b0d910bd2",
+                "reference": "84167f2d755f313b4c80a9ce7637890b0d910bd2",
+                "shasum": ""
             },
             "require": {
-                "danack/artaxservicebuilder": "~0.2.0",
+                "danack/artaxservicebuilder": "~0.2.1",
                 "danack/danack-code": ">=2.4.5",
                 "danack/danackhttp2": ">=1.2.0",
                 "rdlowrey/artax": "v1.0.0-alpha"
@@ -403,20 +474,24 @@
                     "GithubService": "lib/"
                 }
             },
-            "time": "2014-09-15 22:30:30"
+            "support": {
+                "source": "https://github.com/Danack/GithubArtaxService/tree/0.2.3",
+                "issues": "https://github.com/Danack/GithubArtaxService/issues"
+            },
+            "time": "2014-10-12 16:15:47"
         },
         {
             "name": "daverandom/addr",
-            "version": "0.2.x-dev",
+            "version": "v0.2.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/DaveRandom/Addr.git",
-                "reference": "c90bea0e4482844631258c1fdc315cea4b10565d"
+                "reference": "34da0f66b831f92415569797d8b48c4a8b23cc07"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DaveRandom/Addr/zipball/c90bea0e4482844631258c1fdc315cea4b10565d",
-                "reference": "c90bea0e4482844631258c1fdc315cea4b10565d",
+                "url": "https://api.github.com/repos/DaveRandom/Addr/zipball/34da0f66b831f92415569797d8b48c4a8b23cc07",
+                "reference": "34da0f66b831f92415569797d8b48c4a8b23cc07",
                 "shasum": ""
             },
             "require": {
@@ -424,12 +499,19 @@
                 "php": ">=5.4.0",
                 "rdlowrey/alert": "~0.10.0"
             },
+            "require-dev": {
+                "mockery/mockery": ">=0.9.1",
+                "phpunit/phpunit": "~4.1.0",
+                "predis/predis": "~0.8.6",
+                "rdlowrey/auryn": ">=0.13.0"
+            },
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Addr\\": "lib/Addr/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -448,11 +530,7 @@
                 "dns",
                 "resolve"
             ],
-            "support": {
-                "source": "https://github.com/DaveRandom/Addr/tree/0.2",
-                "issues": "https://github.com/DaveRandom/Addr/issues"
-            },
-            "time": "2014-08-05 21:41:32"
+            "time": "2014-08-05 21:47:07"
         },
         {
             "name": "daverandom/libdns",
@@ -587,7 +665,7 @@
         },
         {
             "name": "justinrainbow/json-schema",
-            "version": "dev-master",
+            "version": "1.3.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/justinrainbow/json-schema.git",
@@ -621,6 +699,7 @@
                     "JsonSchema": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -648,58 +727,7 @@
                 "json",
                 "schema"
             ],
-            "support": {
-                "source": "https://github.com/justinrainbow/json-schema/tree/1.3.7",
-                "issues": "https://github.com/justinrainbow/json-schema/issues"
-            },
             "time": "2014-08-25 02:48:14"
-        },
-        {
-            "name": "maximebf/consolekit",
-            "version": "1.0.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/maximebf/ConsoleKit.git",
-                "reference": "c46403e2cf98e8413168c523bdbb7c13a386abe5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/maximebf/ConsoleKit/zipball/c46403e2cf98e8413168c523bdbb7c13a386abe5",
-                "reference": "c46403e2cf98e8413168c523bdbb7c13a386abe5",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "ConsoleKit": "src/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Maxime Bouroumeau-Fuseau",
-                    "email": "maxime.bouroumeau@gmail.com",
-                    "homepage": "http://maximebf.com"
-                }
-            ],
-            "description": "Library to create command line utilities",
-            "homepage": "https://github.com/maximebf/ConsoleKit",
-            "keywords": [
-                "cli",
-                "commands",
-                "console",
-                "shell"
-            ],
-            "support": {
-                "source": "https://github.com/maximebf/ConsoleKit/tree/1.0.3",
-                "issues": "https://github.com/maximebf/ConsoleKit/issues"
-            },
-            "time": "2013-01-01 16:03:55"
         },
         {
             "name": "rdlowrey/acesync",
@@ -909,67 +937,6 @@
             "time": "2014-09-17 04:57:55"
         },
         {
-            "name": "rdlowrey/auryn",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/rdlowrey/Auryn.git",
-                "reference": "4a30ef91f159d81b6cf1f130fc4db12c8f185040"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/rdlowrey/Auryn/zipball/4a30ef91f159d81b6cf1f130fc4db12c8f185040",
-                "reference": "4a30ef91f159d81b6cf1f130fc4db12c8f185040",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "4.0.*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Auryn\\": "lib/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Daniel Lowrey",
-                    "email": "rdlowrey@gmail.com",
-                    "role": "Creator / Main Developer"
-                },
-                {
-                    "name": "Levi Morrison",
-                    "email": "levim@php.net",
-                    "homepage": "http://morrisonlevi.github.com/",
-                    "role": "Developer"
-                },
-                {
-                    "name": "Dan Ackroyd",
-                    "email": "Danack@basereality.com",
-                    "homepage": "http://www.basereality.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Auryn is a dependency injector for bootstrapping object-oriented PHP applications.",
-            "homepage": "https://github.com/rdlowrey/Auryn",
-            "keywords": [
-                "dependency injection",
-                "dic",
-                "ioc"
-            ],
-            "support": {
-                "source": "https://github.com/rdlowrey/Auryn/tree/v0.14.0",
-                "issues": "https://github.com/rdlowrey/Auryn/issues"
-            },
-            "time": "2014-08-11 13:28:33"
-        },
-        {
             "name": "seld/jsonlint",
             "version": "1.3.0",
             "source": {
@@ -1020,17 +987,17 @@
         },
         {
             "name": "symfony/console",
-            "version": "v2.5.4",
+            "version": "v2.5.5",
             "target-dir": "Symfony/Component/Console",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Console.git",
-                "reference": "748beed2a1e73179c3f5154d33fe6ae100c1aeb1"
+                "reference": "ca053eaa031c93afb68a71e4eb1f4168dfd4a661"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Console/zipball/748beed2a1e73179c3f5154d33fe6ae100c1aeb1",
-                "reference": "748beed2a1e73179c3f5154d33fe6ae100c1aeb1",
+                "url": "https://api.github.com/repos/symfony/Console/zipball/ca053eaa031c93afb68a71e4eb1f4168dfd4a661",
+                "reference": "ca053eaa031c93afb68a71e4eb1f4168dfd4a661",
                 "shasum": ""
             },
             "require": {
@@ -1055,39 +1022,37 @@
                     "Symfony\\Component\\Console\\": ""
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
                     "name": "Symfony Community",
                     "homepage": "http://symfony.com/contributors"
+                },
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
                 }
             ],
             "description": "Symfony Console Component",
             "homepage": "http://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/Console/tree/v2.5.4"
-            },
-            "time": "2014-08-14 16:10:54"
+            "time": "2014-09-25 09:53:56"
         },
         {
             "name": "symfony/event-dispatcher",
-            "version": "dev-master",
+            "version": "v2.5.5",
             "target-dir": "Symfony/Component/EventDispatcher",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/EventDispatcher.git",
-                "reference": "68ab3c3f50eae2b152075da722204d4de67f596f"
+                "reference": "f6281337bf5f985f585d1db6a83adb05ce531f46"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/EventDispatcher/zipball/68ab3c3f50eae2b152075da722204d4de67f596f",
-                "reference": "68ab3c3f50eae2b152075da722204d4de67f596f",
+                "url": "https://api.github.com/repos/symfony/EventDispatcher/zipball/f6281337bf5f985f585d1db6a83adb05ce531f46",
+                "reference": "f6281337bf5f985f585d1db6a83adb05ce531f46",
                 "shasum": ""
             },
             "require": {
@@ -1096,7 +1061,7 @@
             "require-dev": {
                 "psr/log": "~1.0",
                 "symfony/config": "~2.0",
-                "symfony/dependency-injection": "~2.0",
+                "symfony/dependency-injection": "~2.0,<2.6.0",
                 "symfony/stopwatch": "~2.2"
             },
             "suggest": {
@@ -1106,7 +1071,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.6-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1114,39 +1079,37 @@
                     "Symfony\\Component\\EventDispatcher\\": ""
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
                     "name": "Symfony Community",
                     "homepage": "http://symfony.com/contributors"
+                },
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
                 }
             ],
             "description": "Symfony EventDispatcher Component",
             "homepage": "http://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/EventDispatcher/tree/master"
-            },
-            "time": "2014-07-28 13:20:53"
+            "time": "2014-09-28 15:56:11"
         },
         {
             "name": "symfony/finder",
-            "version": "dev-master",
+            "version": "v2.5.5",
             "target-dir": "Symfony/Component/Finder",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Finder.git",
-                "reference": "b7b98cf609a94ebc4cd299b736282901223a4b12"
+                "reference": "d5033742b9a6206ef6d06e813870bca18e9205df"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Finder/zipball/b7b98cf609a94ebc4cd299b736282901223a4b12",
-                "reference": "b7b98cf609a94ebc4cd299b736282901223a4b12",
+                "url": "https://api.github.com/repos/symfony/Finder/zipball/d5033742b9a6206ef6d06e813870bca18e9205df",
+                "reference": "d5033742b9a6206ef6d06e813870bca18e9205df",
                 "shasum": ""
             },
             "require": {
@@ -1155,7 +1118,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.6-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1163,39 +1126,37 @@
                     "Symfony\\Component\\Finder\\": ""
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
                     "name": "Symfony Community",
                     "homepage": "http://symfony.com/contributors"
+                },
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
                 }
             ],
             "description": "Symfony Finder Component",
             "homepage": "http://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/Finder/tree/master"
-            },
-            "time": "2014-09-03 09:12:11"
+            "time": "2014-09-27 08:35:39"
         },
         {
             "name": "symfony/process",
-            "version": "dev-master",
+            "version": "v2.5.5",
             "target-dir": "Symfony/Component/Process",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Process.git",
-                "reference": "24aaa0ac728c19170ba4c12663e4cde098c7bac1"
+                "reference": "8a1ec96c4e519cee0fb971ea48a1eb7369dda54b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Process/zipball/24aaa0ac728c19170ba4c12663e4cde098c7bac1",
-                "reference": "24aaa0ac728c19170ba4c12663e4cde098c7bac1",
+                "url": "https://api.github.com/repos/symfony/Process/zipball/8a1ec96c4e519cee0fb971ea48a1eb7369dda54b",
+                "reference": "8a1ec96c4e519cee0fb971ea48a1eb7369dda54b",
                 "shasum": ""
             },
             "require": {
@@ -1204,7 +1165,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.6-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1212,38 +1173,36 @@
                     "Symfony\\Component\\Process\\": ""
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "authors": [
                 {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
                     "name": "Symfony Community",
                     "homepage": "http://symfony.com/contributors"
+                },
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
                 }
             ],
             "description": "Symfony Process Component",
             "homepage": "http://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/Process/tree/master"
-            },
-            "time": "2014-09-17 09:54:14"
+            "time": "2014-09-23 05:25:11"
         },
         {
             "name": "twig/twig",
-            "version": "dev-master",
+            "version": "v1.16.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fabpot/Twig.git",
-                "reference": "084ca201a737de82323f7613665e7229789aa434"
+                "reference": "7c4c01dcf578523cfcddf383641a4f12790270ec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fabpot/Twig/zipball/084ca201a737de82323f7613665e7229789aa434",
-                "reference": "084ca201a737de82323f7613665e7229789aa434",
+                "url": "https://api.github.com/repos/fabpot/Twig/zipball/7c4c01dcf578523cfcddf383641a4f12790270ec",
+                "reference": "7c4c01dcf578523cfcddf383641a4f12790270ec",
                 "shasum": ""
             },
             "require": {
@@ -1260,6 +1219,7 @@
                     "Twig_": "lib/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -1271,14 +1231,14 @@
                     "role": "Lead Developer"
                 },
                 {
-                    "name": "Twig Team",
-                    "homepage": "https://github.com/fabpot/Twig/graphs/contributors",
-                    "role": "Contributors"
-                },
-                {
                     "name": "Armin Ronacher",
                     "email": "armin.ronacher@active-4.com",
                     "role": "Project Founder"
+                },
+                {
+                    "name": "Twig Team",
+                    "homepage": "https://github.com/fabpot/Twig/graphs/contributors",
+                    "role": "Contributors"
                 }
             ],
             "description": "Twig, the flexible, fast, and secure template language for PHP",
@@ -1286,12 +1246,7 @@
             "keywords": [
                 "templating"
             ],
-            "support": {
-                "forum": "https://groups.google.com/forum/#!forum/twig-users",
-                "source": "https://github.com/fabpot/Twig/tree/master",
-                "issues": "https://github.com/fabpot/Twig/issues"
-            },
-            "time": "2014-09-02 14:08:17"
+            "time": "2014-10-10 14:09:53"
         }
     ],
     "packages-dev": [
@@ -1299,14 +1254,14 @@
     ],
     "aliases": [
         {
-            "alias": "0.2.1",
-            "alias_normalized": "0.2.1.0",
+            "alias": "0.2.2",
+            "alias_normalized": "0.2.2.0",
             "version": "9999999-dev",
             "package": "danack/artaxservicebuilder"
         },
         {
-            "alias": "0.2.1",
-            "alias_normalized": "0.2.1.0",
+            "alias": "0.2.3",
+            "alias_normalized": "0.2.3.0",
             "version": "9999999-dev",
             "package": "danack/githubartaxservice"
         },
@@ -1324,7 +1279,7 @@
         "danack/artaxservicebuilder": 20,
         "danack/githubartaxservice": 20
     },
-    "prefer-stable": false,
+    "prefer-stable": true,
     "platform": {
         "php": ">=5.3.2"
     },

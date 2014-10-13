@@ -44,7 +44,7 @@ This makes quite a few security concerns just 'go away' as they are no longer re
 
 .. rubric::  Shedloads faster
 
-Because you will only have a small subset of packages in your repository compared to Packagist, Compposer has a much easier time resolving the dependencies required by your projects; this means no more long waits for Composer to figure out which packages to install.
+Because you will only have a small subset of packages in your repository compared to Packagist, Composer has a much easier time resolving the dependencies required by your projects; this means no more long waits for Composer to figure out which packages to install.
 
 Additionally, the download of the packages should be a lot faster, if you can host the Satis repository in your office, as well as having it in your data-centre, close to where your deploy applications.
 

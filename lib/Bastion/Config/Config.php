@@ -57,7 +57,6 @@ class Config implements \Bastion\Config {
         $outputDirectory,
         $tempDirectory,
         $rpmDirectory,
-        $dryRun, 
         $accessToken, 
         $repoList,
         $rpmList,
@@ -68,11 +67,9 @@ class Config implements \Bastion\Config {
         $s3Region,
         $uploaderClass
     ) {
-
         $this->outputDirectory = $this->normalizeDirectory($outputDirectory);
         $this->tempDirectory = $this->normalizeDirectory($tempDirectory);
         $this->rpmDirectory = $this->normalizeDirectory($rpmDirectory);
-        $this->dryRun = $dryRun;
         $this->accessToken = $accessToken;
         $this->repoList = $repoList;
         $this->rpmList = $rpmList;
@@ -91,6 +88,13 @@ class Config implements \Bastion\Config {
         return $this->dryRun;
     }
 
+    /**
+     * @return bool
+     */
+    public function setIsDryRun($isDryRun) {
+        return $this->dryRun = $isDryRun;
+    }
+    
     /**
      * @return string
      */

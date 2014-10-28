@@ -599,12 +599,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Danack/GithubArtaxService.git",
-                "reference": "1870c3b6b02fecff951d122e112b1ad59a66f358"
+                "reference": "a58228e4165cf0278054c789dcd5fef82f3437ae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Danack/GithubArtaxService/zipball/1870c3b6b02fecff951d122e112b1ad59a66f358",
-                "reference": "1870c3b6b02fecff951d122e112b1ad59a66f358",
+                "url": "https://api.github.com/repos/Danack/GithubArtaxService/zipball/a58228e4165cf0278054c789dcd5fef82f3437ae",
+                "reference": "a58228e4165cf0278054c789dcd5fef82f3437ae",
                 "shasum": ""
             },
             "require": {
@@ -630,7 +630,7 @@
                 "source": "https://github.com/Danack/GithubArtaxService/tree/master",
                 "issues": "https://github.com/Danack/GithubArtaxService/issues"
             },
-            "time": "2014-10-24 15:59:50"
+            "time": "2014-10-28 19:42:33"
         },
         {
             "name": "daverandom/libdns",

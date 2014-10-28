@@ -376,7 +376,7 @@ class ArtifactFetcher {
             $reason = 'InvalidComposerFileException for '.$repo.' '.$repoTag->name.': '.$icf->getMessage();
             //$reason = "Failed to modify composer.json for repo $repo with tag ".$repoTag->name.": ".$icf->getMessage();
 
-            $this->output->write($reason, LogLevel::ERROR);
+            $this->output->write($reason, LogLevel::WARNING);
             $this->repoInfo->addRepoTagToIgnoreList($repoTagName, $reason);
             unlink($tmpfname);
             return;

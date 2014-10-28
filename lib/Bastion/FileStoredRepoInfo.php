@@ -23,7 +23,13 @@ class FileStoredRepoInfo implements RepoInfo {
         //The using list gets reset everytime, and only reflects the most recent run
         file_put_contents($usingListFilename, '');
 
-        $this->ignoreList = file($this->ignoreListFilename, FILE_IGNORE_NEW_LINES);
+        $ignoreList = @file($this->ignoreListFilename, FILE_IGNORE_NEW_LINES);
+
+        $this->ignoreList = [];
+        
+        if ($ignoreList) {
+            $this->ignoreList = $ignoreList;
+        }
     }
     
     /**
@@ -66,8 +72,6 @@ class FileStoredRepoInfo implements RepoInfo {
     function isInIgnoreList($zipFilename) {
         return in_array($zipFilename, $this->ignoreList);
     }
-
-
 }
 
  

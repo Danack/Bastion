@@ -9,11 +9,11 @@ class URLFetcher {
     private $accessToken;
 
     /**
-     * @var \Artax\Client
+     * @var \Amp\Artax\Client
      */
     private $client;
     
-    function __construct(\Artax\Client $client, $accessToken) {
+    function __construct(\Amp\Artax\Client $client, $accessToken) {
         $this->accessToken = $accessToken;
         $this->client = $client;
     }
@@ -23,7 +23,7 @@ class URLFetcher {
      * @param callable $responseCallback
      */
     function downloadFile($uri, callable $responseCallback) {
-        $request = new \Artax\Request();
+        $request = new \Amp\Artax\Request();
         $request->setUri($uri);
         $request->setHeader("User-Agent", "Danack/Bastion");
         if ($this->accessToken) {

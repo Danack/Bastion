@@ -2,6 +2,13 @@
 <?php
 
 use Danack\Console\Output\BufferedOutput;
+use Danack\Console\Formatter\OutputFormatter;
+use Danack\Console\Formatter\OutputFormatterStyle;
+use Danack\Console\Helper\QuestionHelper;
+use GithubService\OneTimePasswordSMSException;
+use GithubService\OneTimePasswordAppException;
+
+use Danack\Console\Output\OutputInterface;
 
 if (!ini_get('allow_url_fopen')) {
     echo "allow_url_fopen is not enabled, things will probably break.";
@@ -27,8 +34,44 @@ catch(\Exception $e) {
 
 //Run the command requested, or the help callable if no command was input
 try {
-    $config = getConfigOrGenerate($parsedCommand->getInput(), $parsedCommand->getOutput(), $console);
+    $output = $parsedCommand->getOutput();
+    $formatter = $output->getFormatter();
+    $formatter->setStyle('question', new OutputFormatterStyle('blue'));
+    $formatter->setStyle('info', new OutputFormatterStyle('blue'));
+
+    $injector = createInjector();
+
+    
+    
+    
+    $questionHelper = new QuestionHelper();
+    $questionHelper->setHelperSet($console->getHelperSet());
+
+    $injector->alias('Danack\Console\Output\OutputInterface', get_class($output));
+    $injector->share($output);
+    $githubArtaxService = $injector->make('GithubService\GithubService');
+
+    $input = $parsedCommand->getInput();
+   
+    
+    $configGenerator = new Bastion\Config\DialogueConfigGenerator(
+        $parsedCommand->getInput(),
+        $parsedCommand->getOutput(),
+        $questionHelper,
+        $githubArtaxService
+    );
+
+    $config = getConfigOrGenerate(
+        $parsedCommand->getInput(),
+        $output,
+        $console,
+        $configGenerator
+    );
+
     $injector = createInjector($config);
+    $injector->alias('Danack\Console\Output\OutputInterface', get_class($output));
+    $injector->share($output);
+
     $injector->execute(
         $parsedCommand->getCallable(),
         formatKeyNames($parsedCommand->getParams())

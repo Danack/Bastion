@@ -58,3 +58,38 @@ Create a file in the /etc/yum.repos.d directory and it will be picked up automat
     baseurl=http://rpm.basereality.com/basereality/SRPM
     enabled=0
     gpgcheck=0
+
+
+
+..rubric:: ACL for S3 static website
+
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:GetBucketWebsite",
+                    "s3:GetBucketAcl",
+                    "s3:GetBucketPolicy",
+                    "s3:GetBucketWebsite",
+                    "s3:GetObject",
+                    "s3:GetObjectAcl",
+                    "s3:GetObjectVersion",
+                    "s3:ListBucket",
+                    "s3:ListMultipartUploadParts",
+                    "s3:PutBucketAcl",
+                    "s3:PutBucketPolicy",
+                    "s3:PutObject",
+                    "s3:PutObject",
+                    "s3:PutObjectAcl",
+                    "s3:PutObjectVersionAcl",
+                    "s3:PutObjectAcl"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::www.bastionrpm.com"
+                ]
+            }
+        ]
+    }
+

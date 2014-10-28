@@ -3,15 +3,20 @@
 
 namespace Bastion;
 
-use Artax\Client as ArtaxClient;
+use Amp\Artax\Client as ArtaxClient;
 
-use Alert\Reactor;
-use Alert\ReactorFactory;
+use Amp\Reactor;
+use Amp\ReactorFactory;
 use Bastion\Config;
-use Artax\Cookie\CookieJar;
-use Artax\HttpSocketPool;
-use Acesync\Encryptor;
-use Artax\WriterFactory;
+use Amp\Artax\Cookie\CookieJar;
+use Amp\Artax\HttpSocketPool;
+//use Amp\Acesync\Encryptor;
+use Nbsock\Encryptor;
+use Amp\Artax\WriterFactory;
+
+use Danack\Console\Output\OutputInterface;
+use Psr\Log\LogLevel;
+
 
 
 class BastionArtaxClient extends ArtaxClient  {
@@ -19,7 +24,14 @@ class BastionArtaxClient extends ArtaxClient  {
 
     private $progressDisplay;
 
+    /**
+     * @var OutputLogger
+     */
+    private $output;
+    
+
     public function __construct(
+        OutputLogger $output,
         \Bastion\Progress $progressDisplay,
         Reactor $reactor = null,
         CookieJar $cookieJar = null,
@@ -29,6 +41,7 @@ class BastionArtaxClient extends ArtaxClient  {
         parent::__construct($reactor, $cookieJar, $socketPool, $encryptor, $writerFactory);
 
         $this->progressDisplay = $progressDisplay;
+        $this->output = $output;
     }
 
 //    /**
@@ -44,7 +57,7 @@ class BastionArtaxClient extends ArtaxClient  {
     /**
      * @param $uriOrRequest
      * @param array $options
-     * @return \After\Promise
+     * @return \Amp\Promise
      */
     public function request($uriOrRequest, array $options = []) {
         $displayText = "Making request: ";
@@ -59,7 +72,7 @@ class BastionArtaxClient extends ArtaxClient  {
 //
 //            $this->requestedURIs[$uriOrRequest] = true;
         }
-        else if ($uriOrRequest instanceof \Artax\Request) {
+        else if ($uriOrRequest instanceof \Amp\Artax\Request) {
             $displayText .= "Request uri: ".$uriOrRequest->getUri();
 
 //            $uri = $uriOrRequest->getUri();
@@ -73,11 +86,11 @@ class BastionArtaxClient extends ArtaxClient  {
             $displayText .= "class ".get_class($uriOrRequest);
         }
 
-        $this->progressDisplay->displayStatus($displayText, 1);
+        $this->output->write($displayText, LogLevel::INFO);
 
         $watchCallback = $this->progressDisplay->getWatcher($uriOrRequest);
         $promise = parent::request($uriOrRequest);
-        $progress = new \Artax\Progress($watchCallback);
+        $progress = new \Amp\Artax\Progress($watchCallback);
         $promise->watch($progress);
 
         return $promise;

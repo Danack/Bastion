@@ -4,8 +4,9 @@ namespace Bastion;
 
 use Composer\Package\Version\VersionParser;
 use GithubService\GithubService;
-use Artax\Request;
-use Artax\Response;
+use Amp\Artax\Request;
+use Amp\Artax\Response;
+use Psr\Log\LogLevel;
 
 
 /**
@@ -57,6 +58,11 @@ class ArtifactFetcher {
      * multiple times. 
      */
     private $processedURIs = array();
+
+    /**
+     * @var OutputLogger
+     */
+    private $output;
     
     
     function __construct(
@@ -64,14 +70,14 @@ class ArtifactFetcher {
         \Bastion\URLFetcher $fileFetcher,
         \Bastion\RepoInfo $repoInfo,
         Config $config,
-        \Bastion\Progress $progress
+        OutputLogger $output
         
     ) {
         $this->githubAPI = $githubAPI;
         $this->repoInfo = $repoInfo;
         $this->urlFetcher = $fileFetcher;
         $this->config = $config;
-        $this->progress = $progress;
+        $this->output = $output;
     }
 
     /**
@@ -93,7 +99,8 @@ class ArtifactFetcher {
      * @param $errorMessage
      */
     function abortProcess($errorMessage) {
-        $this->progress->displayStatus($errorMessage);
+        $this->output->write($errorMessage, LogLevel::ERROR);
+        //@TODO - where did the exit flag go?
     }
 
 
@@ -101,7 +108,12 @@ class ArtifactFetcher {
      * @param \Exception $error
      * @param Response $response
      */
-    function processErrorResponse($action, \Exception $error, Response $response) {
+    function processErrorResponse($action, \Exception $error, Response $response = null) {
+        
+        if ($error) {
+            $this->output->write("Something went wrong: ".$error->getMessage(), LogLevel::ERROR);
+            return false;
+        }
         
         $status = $response->getStatus();
         $errorMessage = false;
@@ -115,16 +127,21 @@ class ArtifactFetcher {
         }
 
         if ($errorMessage == true) {
-            $this->progress->displayStatus($errorMessage, 5);
+            $this->output->write($errorMessage, LogLevel::ERROR);
         }
         else {
-            $this->progress->displayStatus("Unknown error in addRepoToProcess callback: ".$error->getMessage(
-                ).'. Exception class is '.get_class($error), 5
+            $message = sprintf(
+                "Unknown error in addRepoToProcess callback: %s. Exception class is %s",
+                $error->getMessage(),
+                get_class($error)
             );
 
+            $this->output->write($message, LogLevel::CRITICAL);
+
             if ($error instanceof \ArtaxServiceBuilder\BadResponseException) {
-                var_dump($error->getRequest()->getAllHeaders());
-                var_dump($error->getRequest()->getBody());
+                $request = $error->getResponse()->getOriginalRequest();
+                var_dump($request->getAllHeaders());
+                var_dump($request->getBody());
             }
 
             if ($response) {
@@ -145,8 +162,12 @@ class ArtifactFetcher {
             $this->addRepoToProcess($repo);
         }
     }
-    
-    private function alreadyProcessed(Request $request) {
+
+    /**
+     * @param Request $request
+     * @return bool
+     */
+    private function checkAlreadyProcessed(Request $request) {
         $uri = $request->getUri();
         if (array_key_exists($uri, $this->processedURIs) == true) {
             return true;
@@ -167,7 +188,7 @@ class ArtifactFetcher {
         $callback = function(
             \Exception $error = null, 
             \GithubService\Model\RepoTags $repoTags = null,
-            \Artax\Response $response) use($owner, $reponame) {
+            \Amp\Artax\Response $response = null) use($owner, $reponame) {
 
             if ($error) {
                 $this->processErrorResponse("Fetching repo tags for ".$owner."/".$reponame, $error, $response);
@@ -200,7 +221,7 @@ class ArtifactFetcher {
 
         $request = $command->createRequest();
         
-        if ($this->alreadyProcessed($request) == true) {
+        if ($this->checkAlreadyProcessed($request) == true) {
             return;
         }
 
@@ -224,7 +245,7 @@ class ArtifactFetcher {
 
                 $request = $command->createRequest();
 
-                if ($this->alreadyProcessed($request) == true) {
+                if ($this->checkAlreadyProcessed($request) == true) {
                     return;
                 }
 
@@ -232,6 +253,8 @@ class ArtifactFetcher {
             }
         }
     }
+
+ 
     
 
     /**
@@ -240,10 +263,12 @@ class ArtifactFetcher {
      * @param \GithubService\Model\RepoTags $repoTags
      */
     function processRepoTags($owner, $repo, \GithubService\Model\RepoTags $repoTags) {
-        $this->progress->displayStatus("process repo tags owner $owner, repo $repo.");
+        static $complete = 0;
+        $complete++;
+
+        $this->output->write("Process repo tags no. $complete $owner/$repo: ".$repoTags.". ", LogLevel::NOTICE);
         foreach ($repoTags->getIterator() as $repoTag) {
             //Check that this is the same as what is being written to ignore list file
-
             list($repoTagName, ) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
             if ($this->repoInfo->isInIgnoreList($repoTagName) == true) {
                 continue;
@@ -286,11 +311,12 @@ class ArtifactFetcher {
             return;
         }
 
-        $responseCallback = function(\Exception $error = null, \Artax\Response $response = null) use ($owner, $repo, $repoTag) {
+        $responseCallback = function(\Exception $error = null, \Amp\Artax\Response $response = null) use ($owner, $repo, $repoTag) {
 
             if ($error) {
-                $outputString = "Error in getRepoArtifact ".$error->getMessage();
-                $this->progress->displayStatus($outputString);
+                $tagName = $repoTag->name;
+                $outputString = "Error in getRepoArtifact for $owner, $repo, $tagName: ".$error->getMessage();
+                $this->output->write($outputString, LogLevel::ERROR);
                 return;
             }
 
@@ -313,15 +339,15 @@ class ArtifactFetcher {
     
 
     /**
-     * @param \Artax\Response $response
+     * @param \Amp\Artax\Response $response
      * @param $owner
      * @param $repo
      * @param $repoTag
      * @throws \Exception
      */
-    function processDownloadedFileResponse(\Artax\Response $response, $owner, $repo, $repoTag) {
+    function processDownloadedFileResponse(\Amp\Artax\Response $response, $owner, $repo, $repoTag) {
         list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
-
+        
         $status = $response->getStatus();
         if ($status < 200 || $status >= 300) {
             $this->abortProcess("Downloading zipfile $zipFilename from ".$repoTag->zipballURL." did not result in success, actual status ".$status);
@@ -349,7 +375,8 @@ class ArtifactFetcher {
         catch (InvalidComposerFileException $icf) {
             $reason = 'InvalidComposerFileException for '.$repo.' '.$repoTag->name.': '.$icf->getMessage();
             //$reason = "Failed to modify composer.json for repo $repo with tag ".$repoTag->name.": ".$icf->getMessage();
-            echo $reason."\n";
+
+            $this->output->write($reason, LogLevel::ERROR);
             $this->repoInfo->addRepoTagToIgnoreList($repoTagName, $reason);
             unlink($tmpfname);
             return;
@@ -360,9 +387,8 @@ class ArtifactFetcher {
             $this->abortProcess('Could not atomically rename temp file $tmpfname to zipFilename $zipFilename');
             return;
         }
-        
-        echo "Download complete of $repoTagName".PHP_EOL;
 
+        $this->output->write("Download complete of $repoTagName");
         $this->repoInfo->addRepoTagToUsingList($repoTagName);
     }
 

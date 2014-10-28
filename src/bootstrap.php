@@ -4,25 +4,26 @@ use Aws\S3\S3Client;
 
 use Danack\Console\Application;
 use Danack\Console\Helper\QuestionHelper;
-use Artax\Client as ArtaxClient;
-use Alert\Reactor;
-use Alert\ReactorFactory;
+use Amp\Artax\Client as ArtaxClient;
+use Amp\Reactor;
+use Amp\ReactorFactory;
 use Bastion\Config;
 use Bastion\Uploader;
 use Bastion\BastionException;
 use Composer\Satis\Console\Application as SatisApplication;
-use Artax\Cookie\CookieJar;
-use Artax\HttpSocketPool;
-use Acesync\Encryptor;
-use Artax\WriterFactory;
+use Amp\Artax\Cookie\CookieJar;
+use Amp\Artax\HttpSocketPool;
+//use Amp\Acesync\Encryptor;
+use Amp\Artax\WriterFactory;
 use Bastion\ArtifactFetcher;
 use Danack\Console\Input\InputInterface;
 use Danack\Console\Output\OutputInterface;
 use Bastion\BastionArtaxClient;
 use Danack\Console\Command\Command;
 use Danack\Console\Input\InputArgument;
+use Bastion\Config\DialogueConfigGenerator;
 
-
+use Bastion\OutputLogger;
 
 require_once(realpath(__DIR__).'/../vendor/autoload.php');
 
@@ -69,7 +70,7 @@ function getConfig() {
  * @param InputInterface $input
  * @param OutputInterface $output
  */
-function getConfigOrGenerate(InputInterface $input, OutputInterface $output, Application $console) {
+function getConfigOrGenerate(InputInterface $input, OutputInterface $output, Application $console, DialogueConfigGenerator $dialogueGenerator) {
     
     $logo = <<< END
 ______              _    _               
@@ -82,16 +83,25 @@ ______              _    _
                                          
 
 END;
-    
+
+
     
     $config = getConfig();
     if ($config == null) {
+        $output->writeln('');
+        $output->writeln($logo);
 
-        $output->writeln();
 
-        $questionHelper = new QuestionHelper();
-        $questionHelper->setHelperSet($console->getHelperSet());
-        $configGenerator = new Bastion\Config\DialogueGenerator($input, $output, $questionHelper);
+        $output->writeln("Config file could not be loaded either from the current directory or the parent directory. Bastion will now take you through the config generation process. Alternatively you can copy the file 'bastionConfig.placeholder.php' to 'bastionConfig.php' and edit the values directly.".PHP_EOL);
+
+        if (!$input->isInteractive()) {
+            throw new \Bastion\BastionException("Config cannot be generated in a non-interactive shell.");
+        }
+        
+        //$questionHelper = new QuestionHelper();
+        //$questionHelper->setHelperSet($console->getHelperSet());
+        //$configGenerator = new Bastion\Config\DialogueGenerator($input, $output, $questionHelper);
+        $configGenerator = $dialogueGenerator;
         
         $configGenerator->generateConfig();
 
@@ -200,10 +210,10 @@ function syncArtifactBuild(Config $config, Uploader $uploader) {
 /**
  * Debug method for converting an \Artax\Request to a curl 
  * command line request. 
- * @param \Artax\Request $request
+ * @param \Amp\Artax\Request $request
  * @return string
  */
-function toCurl(Artax\Request $request) {
+function toCurl(Amp\Artax\Request $request) {
     $output = '';
     $output .= 'curl -X '.$request->getMethod()." \\\n";
 
@@ -274,40 +284,29 @@ function createS3Client(Config $config) {
  * @param Config $config
  * @return \Auryn\Provider
  */
-function createInjector(Config $config) {
+function createInjector(Config $config = null) {
     $injector = new \Auryn\Provider();
     
     $classAliases = [
-        'Bastion\Config' => get_class($config),
-        'ArtaxServiceBuilder\ResponseCache' => 'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
-        'GithubService\GithubService' => 'GithubService\GithubArtaxService\GithubArtaxService',
+        //'GithubService\GithubService' => 'GithubService\GithubArtaxService\GithubArtaxService',
+
+        'GithubService\GithubService' => 'GithubService\GithubArtaxService\GithubService',
+        
         'Bastion\RepoInfo' => 'Bastion\FileStoredRepoInfo',
         'Bastion\RPM\BuildConfigProvider' => 'Bastion\RPM\RootFileBuildConfigProvider',
     ];
 
-    if ($aclGeneratorClass = $config->getRestrictionClass()) {
-        $classAliases['Bastion\S3ACLGenerator'] = $aclGeneratorClass;
-    }
-    
-    if ($uploaderClass = $config->getUploaderClass()) {
-        $classAliases['Bastion\Uploader'] = 'Bastion\S3Sync';
-    }
 
-    
-    foreach ($classAliases as $class => $alias) {
-        $injector->alias($class, $alias);
-    }
 
     //Share all the classes that should only be singletons
-    $injector->share($config);
     $injector->share('Bastion\RepoInfo');
-    $injector->share('Alert\Reactor');
+    $injector->share('Amp\Reactor');
     $injector->share('Bastion\Progress');
     $injector->share('Artax\Client');
 
     //Define scalar values
     $injector->define('Bastion\S3ACLRestrictByIPGenerator', [':allowedIPAddresses' => []]);
-    $injector->define('Bastion\S3Sync', [':bucket' => $config->getBucketName()]);
+
     $injector->define(
         'Bastion\FileStoredRepoInfo',
         [
@@ -315,46 +314,84 @@ function createInjector(Config $config) {
             ':usingListFilename' => realpath(__DIR__)."/../usingList.txt"
         ]
     );
-    $injector->define(
-        'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
-        [':cacheDirectory' => $config->getCacheDirectory()]
-    );
+
     $injector->define(
         'GithubService\GithubArtaxService\GithubArtaxService',
         [':userAgent' => "Danack/Bastion"]
     );
+
+    
+    $injector->define(
+        'GithubService\GithubArtaxService\GithubService',
+        [':userAgent' => "Danack/Bastion"]
+    );
+    
+    
     
     //Delegate all the things!
     $injector->delegate('Aws\S3\S3Client', 'createS3Client');
-    $injector->delegate('Alert\Reactor', function() {
+    $injector->delegate('Amp\Reactor', function() {
             return (new ReactorFactory)->select();
     });
 
-    $injector->delegate(
-        'Bastion\URLFetcher',
-        function (\Artax\Client $client) use ($config) {
-            return new \Bastion\URLFetcher($client, $config->getAccessToken());
-        }
-    );
 
-    $injector->delegate(
-        'Artax\Client',
-        function (Alert\Reactor $reactor, \Bastion\Progress $progress) {
-            //This extends the client, to be able to put a watch on each of the
-            //Promises that Artax returns
-            $client = new BastionArtaxClient($progress, $reactor); 
-            $client->setOption(ArtaxClient::OP_MS_KEEP_ALIVE_TIMEOUT, 3);
-            $client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 4);
-            // This might be a good idea...
-            // $this->client->setOption(\Artax\Parser::OP_MAX_BODY_BYTES, 20 * 1024 * 1024);
-            return $client;
-        }
-    );
+    $createArtaxClient = function (
+        Amp\Reactor $reactor, 
+        \Bastion\Progress $progress,
+        OutputLogger $output) {
+        //This extends the client, to be able to put a watch on each of the
+        //Promises that Artax returns
+        $client = new BastionArtaxClient($output, $progress, $reactor);
+        $client->setOption(ArtaxClient::OP_MS_KEEP_ALIVE_TIMEOUT, 3);
+        $client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 4);
+        //$client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, -1);
+
+
+        // This might be a good idea...
+        // $this->client->setOption(\Artax\Parser::OP_MAX_BODY_BYTES, 20 * 1024 * 1024);
+        return $client;
+    };
+
+    $injector->delegate('Amp\Artax\Client', $createArtaxClient);
 
     $filename = realpath(dirname(__FILE__).'/../');
     $filename .= '/satis-zips.json';
-    
     $injector->defineParam('satisFilename', $filename);
+
+    if ($config == null) {
+        $classAliases['ArtaxServiceBuilder\ResponseCache']  = 'ArtaxServiceBuilder\ResponseCache\NullResponseCache';
+    }
+    else {
+
+        $classAliases['ArtaxServiceBuilder\ResponseCache']  = 'ArtaxServiceBuilder\ResponseCache\FileResponseCache';
+        
+        if ($aclGeneratorClass = $config->getRestrictionClass()) {
+            $classAliases['Bastion\S3ACLGenerator'] = $aclGeneratorClass;
+        }
+
+        if ($uploaderClass = $config->getUploaderClass()) {
+            $classAliases['Bastion\Uploader'] = 'Bastion\S3Sync';
+        }
+
+        $injector->alias('Bastion\Config', get_class($config));
+        $injector->share($config);
+        $injector->define('Bastion\S3Sync', [':bucket' => $config->getBucketName()]);
+        $injector->define(
+            'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
+            [':cacheDirectory' => $config->getCacheDirectory()]
+        );
+
+        $injector->delegate(
+            'Bastion\URLFetcher',
+            function (\Amp\Artax\Client $client) use ($config) {
+                return new \Bastion\URLFetcher($client, $config->getAccessToken());
+            }
+        );
+    }
+
+    foreach ($classAliases as $class => $alias) {
+        $injector->alias($class, $alias);
+    }
 
     $injector->share($injector); //YOLO service locator
 
@@ -497,7 +534,7 @@ function createConsole() {
     $satisCommand->setDescription("Runs satis to build the website files for the satis repository. Does not download or upload files.");
 
 
-    $allCommand = new Command('repo', 'runCompleteRepoProcess');
+    $allCommand = new Command('bastion', 'runCompleteRepoProcess');
     $allCommand->setDescription("Runs the 'download', 'satis' and 'upload' commands, i.e. everything required to build your own satis repository and upload it to a remote site.");
 
     $console = new Application("Bastion", "1.0.0");

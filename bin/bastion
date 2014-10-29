@@ -11,7 +11,11 @@ use GithubService\OneTimePasswordAppException;
 use Danack\Console\Output\OutputInterface;
 
 if (!ini_get('allow_url_fopen')) {
-    echo "allow_url_fopen is not enabled, things will probably break.";
+    echo "allow_url_fopen is not enabled, things will probably break.\n";
+    echo "php -d allow_url_fopen=1 \n";
+
+   
+    
 }
 
 require __DIR__.'/../src/bootstrap.php';
@@ -41,9 +45,6 @@ try {
 
     $injector = createInjector();
 
-    
-    
-    
     $questionHelper = new QuestionHelper();
     $questionHelper->setHelperSet($console->getHelperSet());
 
@@ -72,9 +73,11 @@ try {
     $injector->alias('Danack\Console\Output\OutputInterface', get_class($output));
     $injector->share($output);
 
+    $keynames = formatKeyNames($parsedCommand->getParams());
+    
     $injector->execute(
         $parsedCommand->getCallable(),
-        formatKeyNames($parsedCommand->getParams())
+        $keynames
     );
 }
 catch(\Bastion\BastionException $be) {

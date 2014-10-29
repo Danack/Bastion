@@ -7,41 +7,53 @@ namespace Bastion\RPM;
 class RPMBuildConfig {
 
     /** @var  \Bastion\RPM\RPMInstallFile[] */
-    private $rpmInstallFiles;
+    private $rpmInstallFiles = [];
 
     /**
      * @var \Bastion\RPM\RPMDataDirectory[]
      */
-    private $rpmDataDirectories;
+    private $rpmDataDirectories = [];
+
     /** @var array */
-    private $crontabFiles;
-    private $sourceFiles;
-    private $sourceDirectories;
+    private $crontabFiles = [];
+    private $sourceFiles = [];
+    private $sourceDirectories = [];
+
+
     
-    public $scripts;
+    /**
+     * @var array The scripts that should be run after the composer install
+     * when the rpm is being generated
+     */
+    public $buildScripts = [];
 
-    private $unixUser = 'www-data';
-    private $unixGroup = 'www-data';
+
+    /** @var array The scripts that should be run before the package is installed. */
+    public $preInstallScripts = [];
     
+    /** @var array The scripts that should be run after the package has been installed. */
+    public $postInstallScripts = [];
 
-    function __construct(
-        array $rpmInstallFiles,
-        array $rpmDataDirectories,
-        array $crontabFiles,
-        array $sourceFiles,
-        array $sourceDirectories,
-        array $scripts
-    ) {
-        $this->rpmInstallFiles = $rpmInstallFiles;
-        $this->rpmDataDirectories = $rpmDataDirectories;
-        $this->crontabFiles = $crontabFiles;
-        $this->sourceFiles = $sourceFiles;
-        $this->sourceDirectories = $sourceDirectories;
-        $this->scripts = $scripts;
-    }
+    /** @var array The scripts that should be run before the package is uninstalled. */
+    public $preUninstallScripts = [];
+    
+    /** @var array The scripts that should be run after the package has been uninstalled. */
+    public $postUninstallScripts = [];
+    
+    
+    /** @var string Which unix user the files should be installed as. */
+    private $unixUser = 'root';
+    /** @var null Which unix group the files should be installas as. They are installed with
+     * the same group as the unixUser if $unixGroup is null. */
+    private $unixGroup = null;
 
-    function checkData() {
-        //TODO - implement
+    /**
+     * @var string The directory to install to. Defaults to /home/$name/$name
+     */
+    private $installDir;
+
+    function getInstallDir() {
+        return $this->installDir;
     }
 
     /**
@@ -60,6 +72,10 @@ class RPMBuildConfig {
     }
 
 
+    /**
+     * @param $config
+     * @return array
+     */
     static function parseDataDirectores($config) {
         $dataDirectories = [];
         if (isset($config['dataDirectories'])) {
@@ -72,7 +88,10 @@ class RPMBuildConfig {
         return $dataDirectories;
     }
 
-
+    /**
+     * @param $config
+     * @return array
+     */
     static function parseCrontabFiles($config) {
         if(isset($config['crontabFiles'])) {
             return $config['crontabFiles'];
@@ -80,7 +99,6 @@ class RPMBuildConfig {
 
         return [];
     }
-
 
     /**
      * @return array
@@ -106,11 +124,10 @@ class RPMBuildConfig {
     /**
      * @return mixed
      */
-    public function getScripts() {
-        return $this->scripts;
+    public function getBuildScripts() {
+        return $this->buildScripts;
     }
 
-    
     /**
      * @return array
      */
@@ -126,34 +143,35 @@ class RPMBuildConfig {
     }
 
 
+    /**
+     * @param $config
+     * @return RPMBuildConfig
+     */
     public static function fromConfig($config) {
-        $rpmInstallFiles = self::parseInstallFiles($config);
-        $rpmDataDirectories = self::parseDataDirectores($config);
-        $crontabFiles = self::parseCrontabFiles($config);
+        $instance = new self();
+        $instance->rpmInstallFiles = self::parseInstallFiles($config);
+        $instance->rpmDataDirectories = self::parseDataDirectores($config);
+        $instance->crontabFiles = self::parseCrontabFiles($config);
+
+        if(isset($config['installDir'])) {
+            $instance->installDir = $config['installDir'];
+        }
         
-        $srcFiles = [];
         if(isset($config['srcFiles'])) {
-            $srcFiles = $config['srcFiles'];
+            $instance->sourceFiles = $config['srcFiles'];
         }
 
-        $srcDirectories = [];
         if(isset($config['srcDirectories'])) {
-            $srcDirectories = $config['srcDirectories'];
+            $instance->sourceDirectories = $config['srcDirectories'];
         }
-
-        $scripts = [];
+        
         if(isset($config['scripts'])) {
-            $scripts = $config['scripts'];
+            $instance->buildScripts = $config['scripts'];
         }
 
-        $instance = new RPMBuildConfig(
-            $rpmInstallFiles,
-            $rpmDataDirectories,
-            $crontabFiles,
-            $srcFiles,
-            $srcDirectories,
-            $scripts
-        );
+        if(isset($config['postInstallScripts'])) {
+            $instance->postInstallScripts = $config['postInstallScripts'];
+        }
 
         return $instance;
     }
@@ -176,6 +194,10 @@ class RPMBuildConfig {
      * @return string
      */
     public function getUnixGroup() {
+        if ($this->unixGroup == null) {
+            return $this->getUnixUser();
+        }
+
         return $this->unixGroup;
     }
 

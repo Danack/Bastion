@@ -7,25 +7,28 @@ use Bastion\BastionException;
 
 class SpecBuilder {
 
-    /** @var RPMBuildConfig  */
+    /** 
+     * @var RPMBuildConfig  
+     */
     private $buildConfig;
-    /** @var RPMProjectConfig  */
-    private $projectConfig;
+    
+    /** 
+     * @var RPMComposerConfig  
+     */
+    private $composerConfig;
+
     private $filesMacro = '';
     private $buildScript = '';
-    private $installDir;
     private $buildDir;
-    private $specFilename = 'intahwebz';
-
+    private $specFilename = 'bastionRPM';
 
     /**
-     * @param RPMBuildConfig $buildConfig
-     * @param RPMProjectConfig $projectConfig
+     * @param RPMBuildConfig $buildConfig - Comes from bastion.php
+     * @param RPMComposerConfig $projectConfig - Comes from composer.json
      * @param $buildDir
      * @throws RPMConfigException
      */
-    function __construct(RPMBuildConfig $buildConfig, RPMProjectConfig $projectConfig, $buildDir) {
-        $buildConfig->checkData();
+    function __construct(RPMBuildConfig $buildConfig, RPMComposerConfig $projectConfig, $buildDir) {
         $projectConfig->checkData();
         $this->buildDir = realpath($buildDir);
         
@@ -39,8 +42,7 @@ class SpecBuilder {
         $this->buildDir .= '/';
         //cloning prevents mutability
         $this->buildConfig = clone $buildConfig;
-        $this->projectConfig = clone $projectConfig;
-        $this->installDir = $projectConfig->getInstallDir();
+        $this->composerConfig = clone $projectConfig;
 
         $this->filesMacro = sprintf(
             "%%files
@@ -51,6 +53,29 @@ class SpecBuilder {
     }
 
     /**
+     * Calculate what the install directory should be. If it's set in bastion.php use
+     * that, otherwise install into /home/projectname
+     * 
+     * @return string
+     */
+    function getInstallDir() {
+        $installDir = $this->buildConfig->getInstallDir();
+
+        if ($installDir) {
+            return $installDir;
+        }
+
+        //@TODO - should this have the version in it? Probably not...
+        //that would only be needed if we wanted to support installing multiple versions at once
+        //which yum usually doesn't allow
+        return sprintf(
+            '/home/%s',
+            $this->composerConfig->getName()
+        );
+    }
+    
+    
+    /**
      * Add the install file to the list of files macro, and also copy them into 
      * the build dir.
      */
@@ -59,7 +84,7 @@ class SpecBuilder {
             $src = $file->getSourceFilename();
             $dest = $file->getDestFilename();
             $dirname = dirname($dest);
-            $this->buildScript .= "echo 'Adding install files\n';".PHP_EOL;
+            $this->buildScript .= "echo 'Adding install files'".PHP_EOL;
             $this->buildScript .= "mkdir -p \$RPM_BUILD_ROOT/$dirname\n";
             $this->buildScript .= "cp \$RPM_BUILD_DIR/$src \$RPM_BUILD_ROOT/$dest \n";
             //todo - adjust attr
@@ -71,10 +96,10 @@ class SpecBuilder {
      * Add any calls to post build scripts.
      */
     private function addPostBuildScripts() {
-        $this->buildScript .= "echo 'addPostBuildScripts\n';".PHP_EOL;
-        foreach ($this->buildConfig->getScripts() as $script) {
+        $this->buildScript .= "echo 'addPostBuildScripts'".PHP_EOL;
+        foreach ($this->buildConfig->getBuildScripts() as $script) {
             echo "Adding script: $script".PHP_EOL;
-            $this->buildScript .= "echo 'Running script: ".addslashes($script)."\n';".PHP_EOL;
+            $this->buildScript .= "echo 'Running script: ".addslashes($script)."';".PHP_EOL;
             $this->buildScript .=  $script."\n";
         }
     }
@@ -87,7 +112,7 @@ class SpecBuilder {
     private function processCrontab() {
         $crontabFiles = $this->buildConfig->getCrontabFiles();
         if (count($crontabFiles)) {
-            $this->buildScript .= "echo 'processCrontab\n';".PHP_EOL;
+            $this->buildScript .= "echo 'processCrontab'".PHP_EOL;
             $this->buildScript .= "mkdir -p \$RPM_BUILD_ROOT/etc/crond.d\n";
         }
 
@@ -103,7 +128,7 @@ class SpecBuilder {
      * files macro.
      */
     function addDataDirectories() {
-        $this->buildScript .= "echo 'addDataDirectories\n';".PHP_EOL;
+        $this->buildScript .= "echo 'addDataDirectories'".PHP_EOL;
         foreach ($this->buildConfig->getRPMDataDirectories() as $rpmDataDirectory) {
             $modeString = "-";
             $mode = $rpmDataDirectory->getMode();
@@ -113,7 +138,7 @@ class SpecBuilder {
 
             $this->buildScript .= sprintf(
                 "mkdir -p \$RPM_BUILD_ROOT/%s/%s \n",
-                $this->projectConfig->getInstallDir(),
+                $this->getInstallDir(),
                 $rpmDataDirectory->getDirectory()
             );
 
@@ -122,7 +147,7 @@ class SpecBuilder {
                 $modeString,
                 $rpmDataDirectory->getUser(),
                 $rpmDataDirectory->getGroup(),
-                $this->projectConfig->getInstallDir(),
+                $this->getInstallDir(),
                 $rpmDataDirectory->getDirectory()
             );
         }
@@ -136,21 +161,21 @@ class SpecBuilder {
         foreach ($this->buildConfig->getSourceDirectories() as $srcDirectory) {
             $this->filesMacro .= sprintf(
                 "%s/%s/*\n",
-                $this->projectConfig->getInstallDir(),
+                $this->getInstallDir(),
                 $srcDirectory
             );
 
-            $this->buildScript .= "echo 'addSourceDirectories\n';".PHP_EOL;
+            $this->buildScript .= "echo 'addSourceDirectories'".PHP_EOL;
             $this->buildScript .= sprintf(
                 "mkdir -p \$RPM_BUILD_ROOT/%s/%s \n",
-                $this->projectConfig->getInstallDir(),
+                $this->getInstallDir(),
                 $srcDirectory
             );
 
             $this->buildScript .= sprintf(
                 "cp -R \$RPM_BUILD_DIR/%s/* \$RPM_BUILD_ROOT/%s/%s/ \n",
                 $srcDirectory,
-                $this->projectConfig->getInstallDir(),
+                $this->getInstallDir(),
                 $srcDirectory
             );
         }
@@ -161,21 +186,60 @@ class SpecBuilder {
      * and lists them in the files macro.
      */
     function addSourceFiles() {
-        $this->buildScript .= "echo 'addSourceFiles\n';".PHP_EOL;
+        $this->buildScript .= "echo 'addSourceFiles'".PHP_EOL;
         foreach ($this->buildConfig->getSourceFiles() as $srcFile) {
             $this->filesMacro .= sprintf(
                 "%s/%s\n",
-                $this->projectConfig->getInstallDir(),
+                $this->getInstallDir(),
                 $srcFile
             );
             
             $this->buildScript .= sprintf(
                 "cp \$RPM_BUILD_DIR/%s \$RPM_BUILD_ROOT/%s/%s \n",
                 $srcFile,
-                $this->projectConfig->getInstallDir(),
+                $this->getInstallDir(),
                 $srcFile
             );
         }
+    }
+
+
+    function getPreInstallScript() {
+        return $this->getActualScripts($this->buildConfig->preInstallScripts);
+    }
+    
+    /**
+     * @Todo get the composer scripts.
+     * @return string
+     */
+    function getPostInstallScript() {
+        return $this->getActualScripts($this->buildConfig->postInstallScripts);
+    }
+
+    function getPreUninstallScript() {
+        return $this->getActualScripts($this->buildConfig->preUninstallScripts);
+    }
+    
+    function getPostUninstallScript() {
+        return $this->getActualScripts($this->buildConfig->postUninstallScripts);
+    }
+    
+    function getActualScripts($scripts) {
+        $finalScript = '';
+        $searchReplace = [
+            '%INSTALL_DIR%' => $this->getInstallDir()
+        ];
+
+        foreach ($scripts as $script) {
+            $nextScript = str_replace(
+                array_keys($searchReplace),
+                array_values($searchReplace),
+                $script
+            );
+            $finalScript .= $nextScript;
+        }
+
+        return $finalScript;
     }
 
     /**
@@ -221,19 +285,20 @@ class SpecBuilder {
      * @return string
      */
     function generateSpec() {
-        $projectName = $this->projectConfig->getName();
-        $version = $this->projectConfig->getVersion();
-        $unmangledVersion = $this->projectConfig->getUnmangledVersion();
-        $release = $this->projectConfig->getRelease();
-        $summary = $this->projectConfig->getSummary();
+        $projectName = $this->composerConfig->getName();
+        $version = $this->composerConfig->getVersion();
+        $unmangledVersion = $this->composerConfig->getUnmangledVersion();
+        $release = $this->composerConfig->getRelease();
+        $summary = $this->composerConfig->getSummary();
 
         $prepScript = sprintf(
             "%%{__mkdir} -p \$RPM_BUILD_ROOT%s",
-            $this->projectConfig->getInstallDir()
+            $this->getInstallDir()
         );
 
-        $installScript = "";
-    
+        $postInstallScript = $this->getPostInstallScript();
+        $postUninstallScript = $this->getPostInstallScript();
+
         $this->processCrontab();
         $this->addInstallFiles();
         $this->addDataDirectories();
@@ -243,14 +308,14 @@ class SpecBuilder {
         $license = null;
         $licenseString = "License: None";
     
-        if ($license = $this->projectConfig->getLicense()) {
+        if ($license = $this->composerConfig->getLicense()) {
             //@TODO - get from project config
             $licenseString = "License: $license)";
         }
 
-        $fullDescription = $this->projectConfig->getFullDescription();
-        $arch = $this->projectConfig->getArch();
-        $group = $this->projectConfig->getRPMGroup();
+        $fullDescription = $this->composerConfig->getFullDescription();
+        $arch = $this->composerConfig->getArch();
+        $group = $this->composerConfig->getRPMGroup();
 
         $cleanScript = "rm -rf \$RPM_BUILD_ROOT";
 
@@ -291,11 +356,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
 BuildArch: $arch
 AutoReqProv: no
-Requires(pre): /usr/sbin/useradd, /usr/bin/getent
-
-%pre
-$preScript
-        
+Requires(pre): /usr/sbin/useradd, /usr/bin/getent        
 %description
 $fullDescription
 
@@ -306,7 +367,21 @@ $prepScript
 $buildScript
 
 %install
-$installScript
+
+#Before installation.
+%pre
+$preScript
+
+#After installation.
+%post
+$postInstallScript
+
+#Before erasure.
+%preun
+
+#After erasure.
+%postun
+$postUninstallScript
 
 %clean
 $cleanScript
@@ -352,11 +427,16 @@ END;
         ];
         
         foreach ($filePatterns as $sourcePattern => $destDirectory) {
+            $fullDirectory = $repoDirectory.'/'.$destDirectory;
+            @mkdir($fullDirectory, 0755, true);
             $files = glob($sourcePattern);
-            var_dump($files);
-
-            echo "Need to copy to ".$repoDirectory.'/'.$destDirectory;
-            exit(0);
+            foreach ($files as $file) {
+                $newFilename = $fullDirectory.'/'.basename($file);
+                $copied = @copy($file, $newFilename);
+                if ($copied === false) {
+                    echo "Failed to copy $file to $newFilename\n";
+                }
+            }
         }
     }
 }

@@ -105,8 +105,10 @@ class ArtifactFetcher {
 
 
     /**
+     * @param $action
      * @param \Exception $error
      * @param Response $response
+     * @return bool
      */
     function processErrorResponse($action, \Exception $error, Response $response = null) {
         
@@ -388,7 +390,23 @@ class ArtifactFetcher {
             return;
         }
 
-        $this->output->write("Download complete of $repoTagName");
+//        $uris =  $response->getRequest()->getUri();
+//        $previous = $response;
+//        
+//        while ($previous = $previous->getPreviousResponse()) {
+//            $uris .= ", ".$previous->getRequest()->getUri();
+//        }
+
+//        static $count = 0;
+//        
+//        if ($count > 60) {
+//            echo "break;";
+//        }
+//        
+//        $count++;
+//        
+        
+        $this->output->write("Download complete of $repoTagName.");
         $this->repoInfo->addRepoTagToUsingList($repoTagName);
     }
 
@@ -452,7 +470,7 @@ class ArtifactFetcher {
 
         if ($modifiedContents) {
             $zip->deleteName($fileToReplace); //Delete the old...
-            $zip->addFromString($fileToReplace, json_encode($modifiedContents)); //Write the new...
+            $zip->addFromString($fileToReplace, json_encode($modifiedContents, JSON_PRETTY_PRINT)); //Write the new...
         }
 
         $zip->close(); //And write back to the filesystem.

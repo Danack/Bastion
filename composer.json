@@ -32,7 +32,7 @@
         "danack/githubartaxservice": "dev-master as 0.3.0",
         "danack/danack-code": ">=2.4.4",
         "danack/console": "~2.6.0",
-        "Danack/auryn": ">=0.13.0",
+        "Danack/auryn": ">=0.14.0",
         "amphp/artax": "v1.0.0-rc5 as v1.0.0-rc2",
         "psr/log": "1.0.0"
     },

@@ -89,6 +89,7 @@ class Config implements \Bastion\Config {
     }
 
     /**
+     * @param $isDryRun
      * @return bool
      */
     public function setIsDryRun($isDryRun) {

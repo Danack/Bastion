@@ -123,7 +123,7 @@ class Progress {
                 break;
             }
             case(\Amp\Artax\Progress::AWAITING_RESPONSE): {
-                $message = "Awaiting resposne";
+                $message = "Awaiting response";
                 break;
             }
             case(\Amp\Artax\Progress::REDIRECTING): {
@@ -152,7 +152,7 @@ class Progress {
             }
         }
 
-        $message =  "$message for $uri";
+        $message =  "$watcherID $message for $uri";
         $this->output->write($message, LogLevel::INFO);
         
         

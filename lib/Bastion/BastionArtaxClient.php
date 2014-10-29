@@ -6,15 +6,12 @@ namespace Bastion;
 use Amp\Artax\Client as ArtaxClient;
 
 use Amp\Reactor;
-use Amp\ReactorFactory;
 use Bastion\Config;
 use Amp\Artax\Cookie\CookieJar;
 use Amp\Artax\HttpSocketPool;
-//use Amp\Acesync\Encryptor;
 use Nbsock\Encryptor;
 use Amp\Artax\WriterFactory;
 
-use Danack\Console\Output\OutputInterface;
 use Psr\Log\LogLevel;
 
 
@@ -91,7 +88,7 @@ class BastionArtaxClient extends ArtaxClient  {
         $watchCallback = $this->progressDisplay->getWatcher($uriOrRequest);
         $promise = parent::request($uriOrRequest);
         $progress = new \Amp\Artax\Progress($watchCallback);
-        $promise->watch($progress);
+//        $promise->watch($progress);
 
         return $promise;
     }

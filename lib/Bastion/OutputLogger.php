@@ -67,7 +67,7 @@ class OutputLogger {
 
         if ($this->output->getVerbosity() >= $this->verbosityLevelMap[$logLevel]) {
             $output = sprintf('<%s>[%s] %s</%s>', $type, $logLevel, $message, $type);
-            $this->output->writeln($output);
+            $this->output->writeln($output, \Danack\Console\Output\OutputInterface::OUTPUT_PLAIN);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Bastion;
 use Bastion\RPM\BuildConfigProvider;
 use Bastion\RPM\RPMConfigException;
 use Bastion\RPM\SpecBuilder;
-use Bastion\RPM\RPMProjectConfig;
+use Bastion\RPM\RPMComposerConfig;
 use Composer\Json\JsonValidationException;
 
 use Composer\Console\Application as ComposerApplication;
@@ -16,8 +16,10 @@ use Symfony\Component\Console\Input\ArrayInput;
 
 /**
  * @todo This has a race condition
- * @param bool $dir
+ * @param $directory
  * @param string $prefix
+ * @throws BastionException
+ * @internal param bool $dir
  * @return null|string
  */
 function tempdir($directory, $prefix) {
@@ -200,37 +202,44 @@ class RPMProcess {
     }
 
 
-    function packageSingleDirectory($sourceDirectory) {
-
+    /**
+     * Package a single directory that contains an already extracted project
+     * that has both a composer.json and bastion.php file in that directory.
+     * @param $directory
+     * @throws BastionException
+     */
+    function packageSingleDirectory($directory) {
         $tempDir = tempdir($this->config->getTempDirectory(), 'BuildRPM');
-        $extractDir = $tempDir.'/intahwebz';
+        $extractDir = $tempDir.'/DanackCodeTest';
 
-        copyDirectory($sourceDirectory, $extractDir);
-        
+        copyDirectory($directory, $extractDir);
+
         $buildDir = $tempDir.'/build';
 
         @mkdir($buildDir, 0755, true);
         
         $version = '0.2.1';
         runComposerInstall($extractDir);
-        $projectConfig = $this->readProjectConfig($sourceDirectory);
-        $buildConfig = $this->buildConfigProvider->getBuildConfig($sourceDirectory);
+        $projectConfig = $this->readProjectConfig($directory);
+
+        $buildConfig = $this->buildConfigProvider->getBuildConfig($directory);
         $projectConfig->setVersion($version);
 
         $specBuilder = new SpecBuilder($buildConfig, $projectConfig, $buildDir);
         //@TODO - class envy detected.
-        $specBuilder->prepareSetupRPM($sourceDirectory);
+        $specBuilder->prepareSetupRPM($directory);
         $specBuilder->run();
         $specBuilder->copyPackagesToRepoDir($this->config->getRPMOutputDirectory());
     }
 
     /**
-     * Extract the artifact, and scan to find the 'root' directory. It is assumed that 
-     * zip/tgz files of source code will have a single root directory containing 
+     * Extract the artifact, and scan to find the 'root' directory. It is assumed that
+     * zip/tgz files of source code will have a single root directory containing
      * everything else.
      * @param $archiveFilename
-     * @param $buildDir
+     * @param $extractDirectory
      * @throws BastionException
+     * @internal param $buildDir
      */
     function extractZipAndReturnRootDirectory($archiveFilename, $extractDirectory) {
         $zip = new \ZipArchive;
@@ -266,11 +275,11 @@ class RPMProcess {
 
     /**
      * @param $sourceDirectory
-     * @return RPMProjectConfig
+     * @return RPMComposerConfig
      * @throws BastionException
      */
     function readProjectConfig($sourceDirectory) {
-        $projectConfig = new RPMProjectConfig();
+        $projectConfig = new RPMComposerConfig();
         try {
             $projectConfig->readComposerJsonFile($sourceDirectory.'/composer.json');
         }

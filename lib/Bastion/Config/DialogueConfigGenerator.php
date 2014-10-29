@@ -10,8 +10,7 @@ use Danack\Console\Input\InputInterface;
 use Danack\Console\Output\OutputInterface;
 use GithubService\GithubArtaxService\GithubArtaxService;
 
-use Composer\IO\ConsoleIO;
-use Composer\Util\ProcessExecutor;
+
 use GithubService\OneTimePasswordSMSException;
 use GithubService\OneTimePasswordAppException;
 
@@ -32,11 +31,7 @@ class DialogueConfigGenerator {
     private $output;
 
     private $githubArtaxService;
-    
-    private $io;
-    
-    private $process;
-    
+
     function __construct(
         InputInterface $input,
         OutputInterface $output,
@@ -47,8 +42,6 @@ class DialogueConfigGenerator {
         $this->input = $input;
         $this->output = $output;
         $this->githubArtaxService = $githubArtaxService;
-        //$this->io = new ConsoleIO($input, $output);
-        //$this->process = new ProcessExecutor($this->io);
     }
 
     /**
@@ -73,12 +66,18 @@ class DialogueConfigGenerator {
         );
         
     }
-    
-    
+
+
     /**
      * @param $configDirectory
      * @param $token
      * @param $zipsDirectory
+     * @param $s3Key
+     * @param $s3Secret
+     * @param $s3Region
+     * @param $domainName
+     * @param $uploaderClass
+     * @param $restrictionClass
      */
     function writeConfig(
         $configDirectory,
@@ -381,15 +380,11 @@ END;
         
         $username = $this->ask('Username: ');
         $password = $this->askAndHideAnswer('Password: ');
-        
-        
  
         $otp = false;
 
         for ($x=0 ; $x<5 ; $x++) {
             $usernamePassword = $username.':'.$password;
-
-            $usernamePassword = 'DanackTest:shinygithubstuff0';
 
             $applicationName = 'Bastion';
             //    if (0 === $this->process->execute('hostname', $output)) {

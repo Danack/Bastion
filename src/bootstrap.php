@@ -112,6 +112,24 @@ END;
 }
 
 
+function outputStats() {
+    
+    static $startTime = null;
+
+    if ($startTime === null) {
+        $startTime = microtime(true);
+    }
+
+    gc_collect_cycles();
+    $elapsed = (microtime(true) - $startTime);
+    printf("used: %10d | allocated: %10d | peak: %10d | elapsed: %5.2f\n",
+           memory_get_usage(),
+           memory_get_usage(true),
+           memory_get_peak_usage(true),
+           $elapsed
+    );
+}
+
 
 
 
@@ -135,8 +153,12 @@ function getArtifacts(
     $artifactFetcher->downloadZipArtifacts(
         $config->getRepoList()
     );
-    
+
+    //$watcherID = Amp\repeat('outputStats', $msDelay = 3000);
+
     $reactor->run();
+    //Amp\cancel($watcherID);
+    
 
     writeSatisJsonFile($satisFilename, $config);
 }
@@ -278,23 +300,20 @@ function createS3Client(Config $config) {
  * @param Config $config
  * @return \Auryn\Provider
  */
-function createInjector(Config $config = null) {
+function createInjector(Config $config = null, Amp\Reactor $reactor = null) {
     $injector = new \Auryn\Provider();
     
     $classAliases = [
         //'GithubService\GithubService' => 'GithubService\GithubArtaxService\GithubArtaxService',
-
         'GithubService\GithubService' => 'GithubService\GithubArtaxService\GithubService',
         
         'Bastion\RepoInfo' => 'Bastion\FileStoredRepoInfo',
         'Bastion\RPM\BuildConfigProvider' => 'Bastion\RPM\RootFileBuildConfigProvider',
     ];
 
-
-
     //Share all the classes that should only be singletons
     $injector->share('Bastion\RepoInfo');
-    $injector->share('Amp\Reactor');
+    
     $injector->share('Bastion\Progress');
     $injector->share('Artax\Client');
 
@@ -320,13 +339,22 @@ function createInjector(Config $config = null) {
         [':userAgent' => "Danack/Bastion"]
     );
     
-    
-    
     //Delegate all the things!
     $injector->delegate('Aws\S3\S3Client', 'createS3Client');
-    $injector->delegate('Amp\Reactor', function() {
-            return (new ReactorFactory)->select();
-    });
+
+    $injector->share('Amp\Reactor');
+
+    if ($reactor) {
+        $injector->alias('Amp\Reactor', get_class($reactor));
+        $injector->share($reactor);
+    }
+    else {
+        $injector->delegate('Amp\Reactor',
+            function () {
+                return Amp\reactor();
+            }
+        );
+    }
 
 
     $createArtaxClient = function (
@@ -337,12 +365,12 @@ function createInjector(Config $config = null) {
         //Promises that Artax returns
         $client = new BastionArtaxClient($output, $progress, $reactor);
         $client->setOption(ArtaxClient::OP_MS_KEEP_ALIVE_TIMEOUT, 3);
-        $client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 4);
-        //$client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, -1);
+        //$client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 4);
+        $client->setOption(ArtaxClient::OP_HOST_CONNECTION_LIMIT, 16); //unlimited
 
 
         // This might be a good idea...
-        // $this->client->setOption(\Artax\Parser::OP_MAX_BODY_BYTES, 20 * 1024 * 1024);
+        //$client->setOption(\Amp\Artax\Parser::OP_MAX_BODY_BYTES, 20 * 1024 * 1024);
         return $client;
     };
 
@@ -352,12 +380,19 @@ function createInjector(Config $config = null) {
     $filename .= '/satis-zips.json';
     $injector->defineParam('satisFilename', $filename);
 
+ 
+    
     if ($config == null) {
         $classAliases['ArtaxServiceBuilder\ResponseCache']  = 'ArtaxServiceBuilder\ResponseCache\NullResponseCache';
     }
     else {
 
         $classAliases['ArtaxServiceBuilder\ResponseCache']  = 'ArtaxServiceBuilder\ResponseCache\FileResponseCache';
+
+        $injector->define(
+            'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
+            [':cacheDirectory' => $config->getCacheDirectory()]
+        );
         
         if ($aclGeneratorClass = $config->getRestrictionClass()) {
             $classAliases['Bastion\S3ACLGenerator'] = $aclGeneratorClass;
@@ -370,10 +405,7 @@ function createInjector(Config $config = null) {
         $injector->alias('Bastion\Config', get_class($config));
         $injector->share($config);
         $injector->define('Bastion\S3Sync', [':bucket' => $config->getBucketName()]);
-        $injector->define(
-            'ArtaxServiceBuilder\ResponseCache\FileResponseCache',
-            [':cacheDirectory' => $config->getCacheDirectory()]
-        );
+        
 
         $injector->delegate(
             'Bastion\URLFetcher',

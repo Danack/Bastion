@@ -2,29 +2,22 @@
 <?php
 
 use Danack\Console\Output\BufferedOutput;
-use Danack\Console\Formatter\OutputFormatter;
 use Danack\Console\Formatter\OutputFormatterStyle;
 use Danack\Console\Helper\QuestionHelper;
-use GithubService\OneTimePasswordSMSException;
-use GithubService\OneTimePasswordAppException;
-
-use Danack\Console\Output\OutputInterface;
 
 if (!ini_get('allow_url_fopen')) {
-    echo "allow_url_fopen is not enabled, things will probably break.\n";
+    echo "allow_url_fopen is not enabled, Composer won't be able to run will probably break.\n";
     echo "php -d allow_url_fopen=1 \n";
-
-   
-    
 }
 
 require __DIR__.'/../src/bootstrap.php';
 
+ini_set('memory_limit','512M');
 
 $console = createConsole();
 
-//Figure out what Command was requested.
 try {
+    //Figure out what Command was requested.
     $parsedCommand = $console->parseCommandLine();
 }
 catch(\Exception $e) {
@@ -48,13 +41,15 @@ try {
     $questionHelper = new QuestionHelper();
     $questionHelper->setHelperSet($console->getHelperSet());
 
+
+    $reactor = $injector->make('Amp\Reactor');
+    
     $injector->alias('Danack\Console\Output\OutputInterface', get_class($output));
     $injector->share($output);
     $githubArtaxService = $injector->make('GithubService\GithubService');
 
     $input = $parsedCommand->getInput();
-   
-    
+
     $configGenerator = new Bastion\Config\DialogueConfigGenerator(
         $parsedCommand->getInput(),
         $parsedCommand->getOutput(),
@@ -69,12 +64,13 @@ try {
         $configGenerator
     );
 
-    $injector = createInjector($config);
+    $injector = createInjector($config, $reactor);
+
     $injector->alias('Danack\Console\Output\OutputInterface', get_class($output));
     $injector->share($output);
 
     $keynames = formatKeyNames($parsedCommand->getParams());
-    
+
     $injector->execute(
         $parsedCommand->getCallable(),
         $keynames

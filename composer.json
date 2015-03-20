@@ -28,12 +28,10 @@
         "aws/aws-sdk-php": "~2.6.0",
         "composer/composer": "dev-master#d79f2b0fd33ee9b89f3d9f1969f43dc3d570a33a",
         "composer/satis": "dev-master#ab05ca3a1fbb93f335fbbd0cc3b7ca1ab5d9c0a9",
-        "danack/artaxservicebuilder": "dev-master as 0.3.0",
-        "danack/githubartaxservice": "dev-master as 0.3.0",
+        "danack/githubartaxservice": "^0.4.4",
         "danack/danack-code": ">=2.4.4",
         "danack/console": "~2.6.0",
         "Danack/auryn": ">=0.14.0",
-        "amphp/artax": "v1.0.0-rc5 as v1.0.0-rc2",
         "psr/log": "1.0.0"
     },
     "autoload": {
@@ -41,5 +39,5 @@
     },
     "bin": ["bin/bastion"],
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": false
 }

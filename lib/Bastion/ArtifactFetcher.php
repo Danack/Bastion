@@ -48,10 +48,6 @@ class ArtifactFetcher {
      */
     private $config;
 
-    /**
-     * @var Progress
-     */
-    private $progress;
     
     /** @var Array of uris that have already been/or are being procesed. Used
      *  to prevent crappy pagination from make the same resources being downloaded 
@@ -256,19 +252,19 @@ class ArtifactFetcher {
         }
     }
 
- 
-    
-
     /**
      * @param $owner
      * @param $repo
      * @param \GithubService\Model\RepoTags $repoTags
      */
     function processRepoTags($owner, $repo, \GithubService\Model\RepoTags $repoTags) {
-        static $complete = 0;
-        $complete++;
+        $this->output->write("Process repo tags  $owner/$repo: ".$repoTags.". ", LogLevel::NOTICE);
 
-        $this->output->write("Process repo tags no. $complete $owner/$repo: ".$repoTags.". ", LogLevel::NOTICE);
+        if (!count($repoTags->repoTags)) {
+            $this->output->write("Repo $owner/$repo has no tags, cannot download versions.", LogLevel::INFO);
+            return;
+        }
+        
         foreach ($repoTags->getIterator() as $repoTag) {
             //Check that this is the same as what is being written to ignore list file
             list($repoTagName, ) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
@@ -328,13 +324,14 @@ class ArtifactFetcher {
         list($repoTagName, $zipFilename) = $this->normalizeRepoTagName($owner, $repo, $repoTag->name);
 
         if (file_exists($zipFilename) == false) {
-            //$outputString .= "Starting download";
-            //$this->progress->displayStatus($outputString);
+            $this->output->write(
+                "Starting download of $owner, $repo, ".$repoTag->name,
+                LogLevel::NOTICE
+            );
             $this->urlFetcher->downloadFile($repoTag->zipballURL, $responseCallback);
         }
         else {
-            //$outputString .= "$zipFilename already exists.";
-            //$this->progress->displayStatus($outputString);
+            $this->output->write("File $zipFilename already exists for $repoTagName", LogLevel::INFO);
             $this->repoInfo->addRepoTagToUsingList($repoTagName);
         }
     }
@@ -397,14 +394,27 @@ class ArtifactFetcher {
 //            $uris .= ", ".$previous->getRequest()->getUri();
 //        }
 
-//        static $count = 0;
+        static $count = 0;
+        
+        if ($count > 30) {
+            echo "break;";
+        }
+        
+        $count++;
+        
+        
+//        static $previous = null;
+//        $increase = '';
+//
+//        $peakMem = memory_get_peak_usage();
 //        
-//        if ($count > 60) {
-//            echo "break;";
+//        if ($previous != null) {
+//            $increase = $peakMem - $previous;
 //        }
+//
+//        $previous = $peakMem;
 //        
-//        $count++;
-//        
+//        echo "Max mem is: ".", increase of $increase\n";
         
         $this->output->write("Download complete of $repoTagName.");
         $this->repoInfo->addRepoTagToUsingList($repoTagName);

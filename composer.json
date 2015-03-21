@@ -17,10 +17,6 @@
         {
             "type": "vcs",
             "url": "https://github.com/Danack/ArtaxServiceBuilder"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/Danack/Auryn"
         }
     ],
     "require": {
@@ -31,7 +27,7 @@
         "danack/githubartaxservice": "^0.4.4",
         "danack/danack-code": ">=2.4.4",
         "danack/console": "~2.6.0",
-        "Danack/auryn": ">=0.14.0",
+        "rdlowrey/auryn": "^0.14.2",
         "psr/log": "1.0.0"
     },
     "autoload": {

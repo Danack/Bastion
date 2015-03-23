@@ -86,6 +86,9 @@ class ArtifactFetcher {
         return $zipFilename;
     }
 
+    /**
+     * 
+     */
     function abort() {
         //Quitting is hard.
         exit(0);
@@ -109,7 +112,10 @@ class ArtifactFetcher {
     function processErrorResponse($action, \Exception $error, Response $response = null) {
         
         if ($error) {
-            $this->output->write("Something went wrong: ".$error->getMessage(), LogLevel::ERROR);
+            $request = $response->getOriginalRequest();
+            $uri = $request->getUri();
+
+            $this->output->write("Error making request to $uri ".$error->getMessage(), LogLevel::ERROR);
             return false;
         }
         
@@ -184,13 +190,13 @@ class ArtifactFetcher {
      */
     function getProcessRepoTagsCallback($owner, $reponame) {
         $callback = function(
-            \Exception $error = null, 
+            \Exception $exception = null, 
             \GithubService\Model\RepoTags $repoTags = null,
-            \Amp\Artax\Response $response = null) use($owner, $reponame) {
+            \Amp\Artax\Response $response = null) use ($owner, $reponame) {
 
-            if ($error) {
-                $this->processErrorResponse("Fetching repo tags for ".$owner."/".$reponame, $error, $response);
-                $this->abort();
+            if ($exception) {
+                $this->processErrorResponse("Fetching repo tags for ".$owner."/".$reponame, $exception, $response);
+                //$this->abort();
                 return;
             }
 
@@ -349,7 +355,10 @@ class ArtifactFetcher {
         
         $status = $response->getStatus();
         if ($status < 200 || $status >= 300) {
-            $this->abortProcess("Downloading zipfile $zipFilename from ".$repoTag->zipballURL." did not result in success, actual status ".$status);
+
+            $body = $response->getBody();
+            
+            $this->abortProcess("Downloading zipfile $zipFilename from ".$repoTag->zipballURL." did not result in success, actual status ".$status.": ".$body);
             return;
         }
 
@@ -399,23 +408,9 @@ class ArtifactFetcher {
         if ($count > 30) {
             echo "break;";
         }
-        
+
         $count++;
-        
-        
-//        static $previous = null;
-//        $increase = '';
-//
-//        $peakMem = memory_get_peak_usage();
-//        
-//        if ($previous != null) {
-//            $increase = $peakMem - $previous;
-//        }
-//
-//        $previous = $peakMem;
-//        
-//        echo "Max mem is: ".", increase of $increase\n";
-        
+
         $this->output->write("Download complete of $repoTagName.");
         $this->repoInfo->addRepoTagToUsingList($repoTagName);
     }

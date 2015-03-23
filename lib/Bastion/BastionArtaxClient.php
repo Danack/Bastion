@@ -72,6 +72,9 @@ class BastionArtaxClient extends ArtaxClient  {
         else if ($uriOrRequest instanceof \Amp\Artax\Request) {
             $displayText .= "Request uri: ".$uriOrRequest->getUri();
 
+            //echo toCurl($uriOrRequest);
+            
+
 //            $uri = $uriOrRequest->getUri();
 //            if (array_key_exists($uri, $this->requestedURIs) == true) {
 //                //Skipit
@@ -84,11 +87,13 @@ class BastionArtaxClient extends ArtaxClient  {
         }
 
         $this->output->write($displayText, LogLevel::INFO);
-
-        $watchCallback = $this->progressDisplay->getWatcher($uriOrRequest);
         $promise = parent::request($uriOrRequest);
-        $progress = new \Amp\Artax\Progress($watchCallback);
-//        $promise->watch($progress);
+
+        if (false) {
+            $watchCallback = $this->progressDisplay->getWatcher($uriOrRequest);
+            $progress = new \Amp\Artax\Progress($watchCallback);
+            $promise->watch($progress);
+        }
 
         return $promise;
     }

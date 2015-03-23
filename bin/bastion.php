@@ -41,9 +41,11 @@ try {
     $questionHelper = new QuestionHelper();
     $questionHelper->setHelperSet($console->getHelperSet());
 
+    $reactor = \Amp\getReactor();
 
-    $reactor = $injector->make('Amp\Reactor');
-    
+    $injector->alias('Amp\Reactor', get_class($reactor));
+    $injector->share($reactor);
+
     $injector->alias('Danack\Console\Output\OutputInterface', get_class($output));
     $injector->share($output);
     $githubArtaxService = $injector->make('GithubService\GithubService');

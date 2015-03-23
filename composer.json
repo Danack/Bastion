@@ -21,19 +21,20 @@
     ],
     "require": {
         "php": ">=5.3.2",
-        "aws/aws-sdk-php": "~2.6.0",
+        "aws/aws-sdk-php": "^2.7.23",
         "composer/composer": "dev-master#d79f2b0fd33ee9b89f3d9f1969f43dc3d570a33a",
         "composer/satis": "dev-master#ab05ca3a1fbb93f335fbbd0cc3b7ca1ab5d9c0a9",
-        "danack/githubartaxservice": "^0.4.4",
+        "danack/githubartaxservice": "^0.4.6",
         "danack/danack-code": ">=2.4.4",
         "danack/console": "~2.6.0",
         "rdlowrey/auryn": "^0.14.2",
-        "psr/log": "1.0.0"
+        "psr/log": "1.0.0",
+        "zendframework/zend-eventmanager": "2.3.7"
     },
     "autoload": {
         "psr-0": { "Bastion": "lib/" }
     },
     "bin": ["bin/bastion"],
     "minimum-stability": "dev",
-    "prefer-stable": false
+    "prefer-stable": true
 }

@@ -3,6 +3,8 @@
 
 namespace Bastion\Config;
 
+use ArtaxServiceBuilder\BasicAuthToken;
+use Bastion\BastionException;
 use Danack\Console\Question\OptionQuestion;
 use Danack\Console\Question\Question;
 use Danack\Console\Helper\QuestionHelper;
@@ -372,6 +374,8 @@ END;
      */
     function createGithubOauthToken($accessPrivateRepo) {
 
+        $maxAttempts = 5;
+        
         $scopes = [];
 
         if ($accessPrivateRepo) {
@@ -383,51 +387,66 @@ END;
  
         $otp = false;
 
-        for ($x=0 ; $x<5 ; $x++) {
-            $usernamePassword = $username.':'.$password;
-
+        for ($x=0 ; $x<$maxAttempts ; $x++) {
+            $currentOTP = $otp;
+            $otp = false;
+            $basicToken = new BasicAuthToken($username, $password);
             $applicationName = 'Bastion';
+            // TODO - reenable this - it adds a note of 
             //    if (0 === $this->process->execute('hostname', $output)) {
             //        $appName .= ' on ' . trim($output);
             //    }
-            //    
 
-            $currentAuthCommand = $this->githubArtaxService->basicListAuthorizations($usernamePassword);
-
-            $currentAuths = $currentAuthCommand->execute();
-            $currentAuth = $currentAuths->findNoteAuthorization($applicationName);
-
-            if ($currentAuth) {
-                //echo "Already have an auth:";
-                return $currentAuth->token;
-            }
-
-            $permissionCommand = $this->githubArtaxService->basicAuthToOauth(
-                $usernamePassword,
-                $scopes,
-                $applicationName,
-                'http://www.bastionrpm.com'
+            $currentAuthCommand = $this->githubArtaxService->basicListAuthorizations(
+                $basicToken->__toString()
             );
 
+            if ($currentOTP) {
+                $currentAuthCommand->setOtp($currentOTP);
+            }
             try {
-                $result = $permissionCommand->execute();
+                $currentAuths = $currentAuthCommand->execute();
+                $currentAuth = $currentAuths->findNoteAuthorization($applicationName);
+    
+                if ($currentAuth) {
+                    return $currentAuth->token; //We already have an oauth token
+                }
+    
+                $createAuthToken = $this->githubArtaxService->createAuthToken(
+                    $basicToken->__toString(),
+                    $scopes,
+                    $applicationName,
+                    'http://www.bastionrpm.com'
+                );
+    
+                if ($currentOTP) {
+                    $createAuthToken->setOtp($currentOTP);
+                }
+
+            
+                $result = $createAuthToken->execute();
+                var_dump($result);
+
+                return $result->token;
             }
             catch (OneTimePasswordSMSException $otpse) {
-                echo "SMS";
-                var_dump($otpse);
-
+                $otp = $this->askAndHideAnswer(
+                    "Please enter the code from the SMS Github should have sent you:\n"
+                );
             }
             catch (OneTimePasswordAppException $otpae) {
-                echo "app";
-                var_dump($otpae);
+                $otp = $this->askAndHideAnswer(
+                    "Please enter the code from your 2nd factor auth app: \n"
+                );
             }
-
             catch (\ArtaxServiceBuilder\BadResponseException $bre) {
                 echo "Exception is: ".$bre->getMessage();
                 var_dump($bre->getResponse()->getAllHeaders());
                 var_dump($bre->getResponse()->getOriginalRequest());
             }
         }
+
+        throw new BastionException("Failed to create oauth token after $maxAttempts attempts.");
     }
     
 

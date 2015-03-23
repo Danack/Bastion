@@ -70,7 +70,7 @@ class Config implements \Bastion\Config {
         $this->outputDirectory = $this->normalizeDirectory($outputDirectory);
         $this->tempDirectory = $this->normalizeDirectory($tempDirectory);
         $this->rpmDirectory = $this->normalizeDirectory($rpmDirectory);
-        $this->accessToken = $accessToken;
+        $this->accessToken = $accessToken->__toString();
         $this->repoList = $repoList;
         $this->rpmList = $rpmList;
         $this->restrictionClass = $restrictionClass;

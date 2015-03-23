@@ -27,7 +27,7 @@ class URLFetcher {
         $request->setUri($uri);
         $request->setHeader("User-Agent", "Danack/Bastion");
         if ($this->accessToken) {
-            $request->setHeader("Authorization", "token ".$this->accessToken);
+            $request->setHeader("Authorization", $this->accessToken);
         }
 
         $promise = $this->client->request($request);

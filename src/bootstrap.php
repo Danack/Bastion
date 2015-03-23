@@ -112,8 +112,10 @@ END;
 }
 
 
+/**
+ * 
+ */
 function outputStats() {
-    
     static $startTime = null;
 
     if ($startTime === null) {
@@ -146,7 +148,7 @@ function getArtifacts(
     Reactor $reactor, $satisFilename) {
 
     if (count($config->getRepoList()) == 0) {
-        echo "Repo list is empty - nothing to process. Please list some ";
+        echo "Repo list is empty - nothing to process. Please list some repos to download.\n";
         return;
     }
 
@@ -154,11 +156,9 @@ function getArtifacts(
         $config->getRepoList()
     );
 
-    //$watcherID = Amp\repeat('outputStats', $msDelay = 3000);
-
+    $watcherID = Amp\repeat('outputStats', $msDelay = 3000);
     $reactor->run();
-    //Amp\cancel($watcherID);
-    
+    Amp\cancel($watcherID);
 
     writeSatisJsonFile($satisFilename, $config);
 }
@@ -304,16 +304,13 @@ function createInjector(Config $config = null, Amp\Reactor $reactor = null) {
     $injector = new \Auryn\Provider();
     
     $classAliases = [
-        //'GithubService\GithubService' => 'GithubService\GithubArtaxService\GithubArtaxService',
         'GithubService\GithubService' => 'GithubService\GithubArtaxService\GithubService',
-        
         'Bastion\RepoInfo' => 'Bastion\FileStoredRepoInfo',
         'Bastion\RPM\BuildConfigProvider' => 'Bastion\RPM\RootFileBuildConfigProvider',
     ];
 
     //Share all the classes that should only be singletons
     $injector->share('Bastion\RepoInfo');
-    
     $injector->share('Bastion\Progress');
     $injector->share('Artax\Client');
 
